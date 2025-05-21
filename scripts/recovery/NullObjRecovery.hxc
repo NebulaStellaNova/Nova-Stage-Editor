@@ -1,0 +1,57 @@
+import flixel.FlxG;
+import funkin.util.logging.CrashHandler;
+import funkin.modding.module.Module;
+import openfl.events.UncaughtErrorEvent;
+import funkin.ui.mainmenu.MainMenuState;
+import lime.app.Application;
+import StringTools;
+
+/**
+ * Attempts to recover from a null object reference error by switching to the Main Menu as a fallback.
+ */
+class NullObjRecovery extends Module
+{
+  public function new()
+  {
+    super('NullObjRecovery');
+
+    // We override the default uncaught error events with our own :)
+    FlxG.stage.__uncaughtErrorEvents.__removeAllListeners();
+    FlxG.stage.__uncaughtErrorEvents.addEventListener("uncaughtError", nullObjRecovery);
+  }
+
+  static function nullObjRecovery(error:UncaughtErrorEvent):Void
+  {
+    var isNullObj:Bool = error.error.indexOf("Null Object Reference") != -1;
+
+    if (isNullObj)
+    {
+      error.__preventDefault = true;
+    }
+
+    CrashHandler.errorSignal.dispatch(CrashHandler.generateErrorMessage(error));
+
+    CrashHandler.logError(error);
+
+    var generatedError:String = CrashHandler.generateErrorMessage(error);
+
+    displayErrorMessage(generatedError, isNullObj);
+
+    if (isNullObj)
+    {
+      FlxG.switchState(() -> new MainMenuState());
+      return;
+    }
+
+    Application.current.window.close();
+  }
+
+  static function displayErrorMessage(message:String, fallback:Bool):Void
+  {
+    if (fallback)
+    {
+      message += "\nThe game will now attempt to return to the Main Menu.";
+    }
+    Application.current.window.alert(message, "Fatal Uncaught Exception");
+  }
+}

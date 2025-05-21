@@ -1,0 +1,1756 @@
+import Xml;
+import Type;
+import Reflect;
+import StringTools;
+
+import lime.system.System;
+
+import haxe.Json;
+
+import flixel.FlxG;
+import flixel.FlxCamera;
+import flixel.FlxSprite;
+import flixel.FlxObject;
+
+import funkin.Paths;
+import funkin.Assets;
+
+import flixel.util.FlxSave;
+import funkin.util.FileUtil;
+import funkin.util.MathUtil;
+import funkin.util.WindowUtil;
+import funkin.util.ReflectUtil;
+
+import funkin.ui.AtlasText;
+import flixel.math.FlxMath;
+import flixel.text.FlxText;
+import funkin.input.Cursor;
+import haxe.ui.core.Screen;
+import openfl.net.FileFilter;
+import funkin.input.CursorMode;
+import funkin.audio.FunkinSound;
+import funkin.ui.MusicBeatState;
+import haxe.ui.components.DropDown;
+import funkin.graphics.FunkinSprite;
+import flixel.text.FlxTextBorderStyle;
+import haxe.ui.backend.flixel.UIState;
+import haxe.ui.RuntimeComponentBuilder;
+import funkin.ui.mainmenu.MainMenuState;
+import funkin.ui.debug.charting.ChartEditorState;
+
+import funkin.play.character.SparrowCharacter;
+import funkin.play.character.MultiSparrowCharacter;
+
+import funkin.modding.PolymodHandler;
+import funkin.modding.module.ModuleHandler;
+import funkin.modding.base.ScriptedMusicBeatState;
+import funkin.modding.base.ScriptedFlxRuntimeShader;
+
+import funkin.audio.waveform.WaveformOrientation;
+import funkin.audio.waveform.WaveformSprite;
+
+import haxe.ui.core.Component;
+import haxe.ui.core.TextDisplay;
+
+import haxe.ui.components.Label;
+import haxe.ui.components.Button;
+import haxe.ui.components.TextArea;
+import haxe.ui.components.CheckBox;
+import haxe.ui.components.TextField;
+import haxe.ui.components.NumberStepper;
+
+import haxe.ui.containers.HBox;
+import haxe.ui.containers.ListView;
+import haxe.ui.containers.menus.Menu;
+import haxe.ui.containers.menus.MenuBar;
+import haxe.ui.containers.windows.Window;
+import haxe.ui.containers.menus.MenuItem;
+import haxe.ui.containers.menus.MenuCheckBox;
+import haxe.ui.containers.menus.MenuOptionBox;
+import haxe.ui.containers.menus.MenuSeparator;
+import haxe.ui.containers.windows.WindowManager;
+
+import haxe.ui.data.ArrayDataSource;
+
+import haxe.ui.macros.ComponentMacros;
+
+import openfl.events.UncaughtErrorEvent;
+
+class StageEditor extends MusicBeatState {
+    var doCrash = false;
+
+    // -- Shaders -- \\
+    var brightenShader = new ScriptedFlxRuntimeShader("
+        #pragma header
+
+        uniform float offset;
+
+        void main() {
+            gl_FragColor = flixel_texture2D(bitmap, openfl_TextureCoordv);
+            gl_FragColor.rgb += offset * gl_FragColor.a;
+        }
+    ");
+
+    var brightenShader2 /* For Flashing UI Elements */ = new ScriptedFlxRuntimeShader("
+        #pragma header
+
+        uniform float offset;
+
+        void main() {
+            gl_FragColor = flixel_texture2D(bitmap, openfl_TextureCoordv);
+            gl_FragColor.rgb += offset * gl_FragColor.a;
+        }
+    ");
+            
+    var save = new FlxSave();
+
+    // -- Characters -- \\
+    var player;
+    var spectator;
+    var opponent;
+    
+    
+    // ---------------- \\
+    
+    var FILE_FILTER_XML:FileFilter = new FileFilter("Codename Stage File", "*.xml");
+
+    var Converters;
+
+    var stageName;
+
+    var camHUD;
+    var camDropDown; // FUCK YOU HAXE UI
+
+    var currentFolder = "??";
+    var currentTrack = "Artistic Expression";
+
+    var editorVersion = "v0.1.0";
+
+    var windowTitleSuffix = "";
+    var windowTitlePrefix = "";
+    
+    var unsavedChanges = false;
+
+    var propDatas = []; // For index grabbing.
+    var characterDatas = [];
+    var stageDatas = [];
+    var curStageData;
+    var curPropData;
+    var curPropSteppers = [];
+
+    var waveform:WaveformSprite;
+
+    var windowManager = new WindowManager();
+
+    var propList;
+
+    var currentlyAddedProps = [];
+
+
+    var cameraTarget = {
+        x: 0,
+        y: 0,
+        zoom: 1
+    }
+
+    // -- Menus -- \\
+        // - Window - \\
+        var stageDataOption;
+    
+    // -- Windows -- \\
+    var stageWindow;
+    var songWindow;
+
+    var offsetX = FlxG.width/4;
+    var offsetY = FlxG.height/4;
+    
+    function createClickCircle() {
+        return;
+        
+        var circleCam = new FlxCamera();
+        circleCam.bgColor = 0x00000000;
+        FlxG.cameras.add(circleCam, false);
+
+        var circle = new FunkinSprite();
+        circle.frames = Paths.getSparrowAtlas("circle");
+        circle.animation.addByPrefix("idle", "play", 24, false);
+        circle.animation.finishCallback = ()->{
+            circle.x = -1000000;
+            circle.kill();
+        }
+        circle.scale.set(1.75, 1.75);
+        circle.antialiasing = true;
+        circle.updateHitbox();
+        circle.x = FlxG.mouse.x - (circle.width/2) + 3;
+        circle.y = FlxG.mouse.y - (circle.height/2) + 3;
+        circle.animation.play("idle");
+        circle.cameras = [circleCam];
+        circle.scrollFactor.set();
+        add(circle);
+        //circle.x = FlxG.mouse.
+    }
+
+    /*function getPath(file:String) {
+        return paths + file;
+    }*/
+
+    /**
+     * Shortcut to parse a JSON string
+     * @param str JSON contents as string.
+     * @return Parsed JSON
+    */
+    public function parseJsonString(str:String) {
+        return Json.parse(str);
+    }
+
+    /**
+     * Shortcut to parse a JSON file
+     * @param path  Path to the JSON file
+     * @return Parsed JSON
+    */
+    public function parseJsonFile(path:String) {
+        var daString = FileUtil.readStringFromPath(path);
+        if (daString == null || daString == "") {
+            return null;
+        } else {
+            return parseJsonString(daString);
+        }
+    }
+
+    function checkFileExists(path:String) {
+        return Assets.exists(path);
+    }
+
+    function fixPath(path) {
+        var stringSplit = path.split("\\");
+        while (stringSplit[0] != "mods") {
+            stringSplit.shift();
+        }
+        path = stringSplit.join("/");
+        return path;
+    }
+
+    
+    function writeStageFile(path, jsonFile) {
+        var generatedBy = "Nova Stage Editor " + editorVersion;
+        jsonFile.version = generatedBy;
+        var fileString = Json.stringify(jsonFile, null, "\t");
+        FileUtil.writeStringToPath(path, fileString);
+        //if (checkFileExists(path)) {
+        FileUtil.deleteFile(path);
+        //}
+        FileUtil.writeStringToPath(path, fileString);
+        //windowTitleSuffix = StringTools.replace(windowTitleSuffix, " *", "");
+    }
+
+    function saveStageAs() {
+        FileUtil.browseForSaveFile([FileUtil.FILE_FILTER_JSON], (path)->{
+            trace(fixPath(path));
+            writeStageFile(fixPath(path), curStageData.stage);
+            FlxG.switchState(ScriptedMusicBeatState.init('StageEditor'));
+        }, null, curStageData.fileName);
+    }
+
+    function reloadPropList() {
+        propList.selectedItem = null;
+        propList.selectedItems = [];
+        var prevTarget = ReflectUtil.copy(cameraTarget);
+        loadStage(curStageData);
+        cameraTarget = prevTarget;
+    }
+
+    function loadCharacter(characterData, position) {
+        var character = characterData.character;
+        var charToEdit;
+        switch (position) {
+            case "player":
+                var index = members.indexOf(player);
+                remove(player);
+                if (character.renderType == "sparrow") {
+                    player = new SparrowCharacter(characterData.id);
+                } else if (character.renderType == "multisparrow") {
+                    player = new MultiSparrowCharacter(characterData.id);
+                } else {
+                    player = new SparrowCharacter(characterData.id);
+                }
+                player.onCreate();
+                player.updateHitbox();
+                player.x = curStageData.stage.characters.bf.position[0]+(offsetX);
+                player.y = curStageData.stage.characters.bf.position[1]+(offsetY);
+                player.x -= player.width/2;
+                player.y -= player.height;
+                player.flipX = !player.flipX;
+                insert(curStageData.stage.characters.bf.zIndex, player);
+            case "spectator":
+                var index = members.indexOf(spectator);
+                remove(spectator);
+                if (character.renderType == "sparrow") {
+                    spectator = new SparrowCharacter(characterData.id);
+                } else if (character.renderType == "multisparrow") {
+                    spectator = new MultiSparrowCharacter(characterData.id);
+                } else {
+                    spectator = new SparrowCharacter(characterData.id);
+                }
+                spectator.onCreate();
+                spectator.updateHitbox();
+                spectator.x = curStageData.stage.characters.gf.position[0]+(offsetX);
+                spectator.y = curStageData.stage.characters.gf.position[1]+(offsetY);
+                spectator.x -= spectator.width/2;
+                spectator.y -= spectator.height;
+                insert(curStageData.stage.characters.gf.zIndex, spectator);
+            case "opponent":
+                var index = members.indexOf(opponent);
+                remove(opponent);
+                if (character.renderType == "sparrow") {
+                    opponent = new SparrowCharacter(characterData.id);
+                } else if (character.renderType == "multisparrow") {
+                    opponent = new MultiSparrowCharacter(characterData.id);
+                } else {
+                    opponent = new SparrowCharacter(characterData.id);
+                }
+                opponent.onCreate();
+                opponent.updateHitbox();
+                opponent.x = curStageData.stage.characters.dad.position[0]+(offsetX);
+                opponent.y = curStageData.stage.characters.dad.position[1]+(offsetY);
+                opponent.x -= opponent.width/2;
+                opponent.y -= opponent.height;
+                insert(curStageData.stage.characters.dad.zIndex, opponent);
+        }
+        
+        // var index = members.indexOf(charToEdit);
+        // remove(charToEdit);
+        // insert(index, charToEdit);
+    }
+
+    function loadStage(stageData) {
+        curStageData = stageData;
+        var stage = stageData.stage;
+        cameraTarget.zoom = stage.cameraZoom;
+        trace("Stage to load: " + stage.name);
+
+        if (stageName != null) {
+            stageName.text = stage.name;
+        }
+        for (i in currentlyAddedProps) {
+            i.kill();
+        }
+        currentlyAddedProps = [];
+        propDatas = [];
+
+        var data = new ArrayDataSource();
+        propList.dataSource = data;
+        var prevIndex = -10000;
+        for (i in stage.props) {
+            propDatas.push(i);
+            
+            
+            data.add( { text: i.name } ); 
+            trace(i);
+            var prop = new FunkinSprite(i.position[0]+(offsetX), i.position[1]+(offsetY));
+            var anims = i.animations+"";
+            if (anims == "[]" || anims == "null") {
+                prop.loadGraphic(Paths.image(i.assetPath));
+            } else if (i.animations != null) {
+                prop.frames = Paths.getSparrowAtlas(i.assetPath);
+                for (i in i.animations) {
+                    prop.animation.addByPrefix(i.name, i.prefix, i.frameRate != null ? i.frameRate : 24, i.looped != null ? i.looped : true);
+                }
+                prop.animation.play(i.startingAnimation);
+            }
+            prop.alpha = i.alpha != null ? i.alpha : 1;
+            prop.scrollFactor.set(
+                i.scroll != null ? i.scroll[0] : 1,
+                i.scroll != null ? i.scroll[1] : 1
+            );
+            prop.flipX = i.flipX != null ? i.flipX : false;
+            prop.scale.set(
+                i.scale != null ? i.scale[0] : 1,
+                i.scale != null ? i.scale[1] : 1
+            );
+            if (i.zIndex == prevIndex) {
+                i.zIndex++;
+            }
+            insert(i.zIndex, prop);
+            currentlyAddedProps.push(prop);
+            prevIndex = i.zIndex;
+        }
+
+        player.x = stage.characters.bf.position[0]+(offsetX);
+        player.y = stage.characters.bf.position[1]+(offsetY);
+        player.x -= player.width/2;
+        player.y -= player.height;
+        //remove(player);
+        //insert(stage.characters.bf.zIndex, player);
+
+        spectator.x = stage.characters.gf.position[0]+(offsetX);
+        spectator.y = stage.characters.gf.position[1]+(offsetY);
+        spectator.x -= spectator.width/2;
+        spectator.y -= spectator.height;
+        //remove(spectator);
+        //insert(stage.characters.gf.zIndex, spectator);
+
+        opponent.x = stage.characters.dad.position[0]+(offsetX);
+        opponent.y = stage.characters.dad.position[1]+(offsetY);
+        opponent.x -= opponent.width/2;
+        opponent.y -= opponent.height;
+        //remove(opponent);
+        //insert(stage.characters.dad.zIndex, opponent);
+        //stage.characters.bf.position;
+    }
+
+    function new(){
+        super('CharacterEditor');
+        h = FlxG.height;
+        w = FlxG.width;
+        brightenShader.data.offset.value = [0.0];
+        brightenShader2.data.offset.value = [0.0];
+    }
+
+    function create() {
+        super.create();
+        
+		save.bind("stage-editor", "NebulaStellaNova");
+        if(save.data.editorSong == null) {
+			save.data.editorSong = {
+                title: "Artistic Expression",
+                key: "chartEditorLoop"
+            }
+        }
+
+        waveform = new WaveformSprite(FlxG.sound.music.waveformData, WaveformOrientation.HORIZONTAL, 0xFFFFFFFF, 1.25);
+		waveform.forceUpdate = true;
+		waveform.x = -100;
+		waveform.y = -15;
+		waveform.width = 200;
+		waveform.height = 100;
+		waveform.alpha = .8;
+		waveform.amplitude = 1.5;
+		waveform.minWaveformSize = 1;
+		add(waveform);
+
+        var chartEditor = new ChartEditorState();
+        
+
+        var icons = ["bf", "gf", "dad"];
+        player = new FunkinSprite(100, 100);
+        player.loadGraphic(Paths.image("icons/icon-" + icons[0]), true, 150, 150);
+        add(player);
+        spectator = new FunkinSprite(100, 100);
+        spectator.loadGraphic(Paths.image("icons/icon-" + icons[1]), true, 150, 150);
+        add(spectator);
+        opponent = new FunkinSprite(100, 100);
+        opponent.loadGraphic(Paths.image("icons/icon-" + icons[2]), true, 150, 150);
+        add(opponent);
+        
+
+        FunkinSound.playMusic(save.data.editorSong.key, {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+        FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+
+        for (mod in PolymodHandler.getAllMods()) {
+            var meta = parseJsonFile("mods/" + mod.id + "/_polymod_meta.json");
+            if (meta.title == "Nova Stage Editor") {
+                currentFolder = "mods/" + mod.id;
+                break;
+            }
+        }
+
+        Converters = ModuleHandler.getModule("NovaConverters");
+
+        Cursor.show();
+
+        // if (FileUtil.directoryExists("assets/data/stages/")) {
+        //         for (file in FileUtil.readDir("assets/data/stages/")) {
+        //             if (StringTools.endsWith(file, ".json")) {
+        //                 //mods.push(polyMeta.title);
+        //                 var stageFile = parseJsonFile("assets/data/stages/" + file);
+        //                 stageDatas.push({
+        //                     stage: stageFile,
+        //                     polyMeta: {
+        //                         title: "Friday Night Funkin'"
+        //                     }
+        //                 });
+        //             }
+        //         }
+        //     }
+
+        stageDatas.push({
+            fileName: "mainStage.json",
+            path: "assets",
+            stage: parseJsonFile("assets/data/stages/mainStage.json"),
+            polyMeta: null
+        });
+        characterDatas.push({
+            id: "bf",
+            fileName: "bf.json",
+            path: "assets",
+            character: parseJsonFile("assets/data/characters/bf.json"),
+            polyMeta: null
+        });
+        characterDatas.push({
+            id: "gf",
+            fileName: "gf.json",
+            path: "assets",
+            character: parseJsonFile("assets/data/characters/gf.json"),
+            polyMeta: null
+        });
+
+        for (i in FileUtil.readDir("mods")) {
+            if (FileUtil.directoryExists("mods/" + i + "/data/stages/")) {
+                for (file in FileUtil.readDir("mods/" + i + "/data/stages/")) {
+                    if (StringTools.endsWith(file, ".json")) {
+                        var polyMeta = parseJsonFile("mods/" + i + "/_polymod_meta.json");
+                        //mods.push(polyMeta.title);
+                        var stageFile = parseJsonFile("mods/" + i + "/data/stages/" + file);
+                        stageDatas.push({
+                            fileName: file,
+                            path: "mods/" + i + "/",
+                            stage: stageFile,
+                            polyMeta: polyMeta
+                        });
+                    }
+                }
+            }
+            if (FileUtil.directoryExists("mods/" + i + "/data/characters/")) {
+                for (file in FileUtil.readDir("mods/" + i + "/data/characters/")) {
+                    if (StringTools.endsWith(file, ".json")) {
+                        var polyMeta = parseJsonFile("mods/" + i + "/_polymod_meta.json");
+                        //mods.push(polyMeta.title);
+                        var charFile = parseJsonFile("mods/" + i + "/data/characters/" + file);
+                        characterDatas.push({
+                            id: StringTools.replace(file, ".json", ""),
+                            fileName: file,
+                            path: "mods/" + i + "/",
+                            character: charFile,
+                            polyMeta: polyMeta
+                        });
+                    }
+                    
+                }
+            }
+        }
+        
+
+        camHUD = new FlxCamera();
+        camHUD.bgColor = 0x00000000;
+        FlxG.cameras.add(camHUD, false);
+
+        camDropDown = new FlxCamera();
+        camDropDown.bgColor = 0x00000000;
+        FlxG.cameras.add(camDropDown, false);
+
+        var topBar = new MenuBar();
+        topBar.width = FlxG.width;
+        topBar.cameras = [camHUD];
+        //topBar.height = 50;
+        add(topBar);
+
+        var fileMenu = new Menu();
+        fileMenu.text = "File";
+    
+        var saveItem = new MenuItem();
+        saveItem.text = "Save";
+        saveItem.shortcutText = "Ctrl + S";
+        saveItem.onClick = ()->{
+            writeStageFile(curStageData.path + "/data/stages/" + curStageData.fileName, curStageData.stage);
+        }
+        fileMenu.addComponent(saveItem);
+
+        var saveAsItem = new MenuItem();
+        saveAsItem.text = "Save As";
+        saveAsItem.shortcutText = "Ctrl + Shift + S";
+        saveAsItem.onClick = ()-> {
+            saveStageAs();
+        }
+        fileMenu.addComponent(saveAsItem);
+
+        var separator = new MenuSeparator();
+        fileMenu.addComponent(separator);
+
+        var exitToMenuItem = new MenuItem();
+        exitToMenuItem.text = "Exit To Menu";
+        exitToMenuItem.onClick = ()->{
+            if (!unsavedChanges) {
+                FlxG.switchState(new MainMenuState());
+            } 
+        }
+        fileMenu.addComponent(exitToMenuItem);
+        
+        var windowsMenu = new Menu();
+        windowsMenu.text = "Windows";
+    
+        stageDataOption = new MenuCheckBox();
+        stageDataOption.text = "Stage Data";
+        stageDataOption.selected = false;
+        stageDataOption.onChange = ()->{
+            //stageWindowOpened = !stageWindowOpened;
+            //stageDataOption.selected = stageWindowOpened;
+            if (stageDataOption.selected) {
+                stageWindow = new Window();
+                stageWindow.cameras = [camHUD];
+                stageWindow.windowManager = windowManager;
+                stageWindow.title = "Stage Data";
+                stageWindow.maximizable = false;
+                stageWindow.minimizable = false;
+                stageWindow.collapsable = false;
+                stageWindow.width = 250;
+                stageWindow.screenCenter();
+                stageWindow.x = FlxG.width - stageWindow.width - 10;
+                stageWindow.y = topBar.height + 10;
+
+                var stageList = new DropDown();
+                stageList.text = "Pick Stage";
+                stageList.searchable = true;
+                stageList.width = 215;
+                for (i in stageDatas) {
+                    stageList.dataSource.add({text: i.stage.name});
+                }
+                stageList.onChange = ()->{
+                    for (i in stageDatas) {
+                        if (i.stage.name == stageList.text) {
+                            i.stage = parseJsonFile(i.path + "/data/stages/" + i.fileName);
+                            loadStage(i);
+                            break;
+                        }
+                    }
+                }
+                var playerList = new DropDown();
+                playerList.text = "Pick Player";
+                playerList.searchable = true;
+                playerList.width = 215;
+                for (i in characterDatas) {
+                    playerList.dataSource.add({text: i.character.name});
+                }
+                playerList.onChange = ()->{
+                    for (i in characterDatas) {
+                        if (i.character.name == playerList.text) {
+                            loadCharacter(i, "player");
+                            playerList.text = "Player: " + i.character.name;
+                            break;
+                        }
+                    }
+                }
+                var spectatorList = new DropDown();
+                spectatorList.text = "Pick Spectator";
+                spectatorList.searchable = true;
+                spectatorList.width = 215;
+                for (i in characterDatas) {
+                    spectatorList.dataSource.add({text: i.character.name});
+                }
+                spectatorList.onChange = ()->{
+                    for (i in characterDatas) {
+                        if (i.character.name == spectatorList.text) {
+                            loadCharacter(i, "spectator");
+                            spectatorList.text = "Spectator: " + i.character.name;
+                            break;
+                        }
+                    }
+                }
+                var opponentList = new DropDown();
+                opponentList.text = "Pick Opponent";
+                opponentList.searchable = true;
+                opponentList.width = 215;
+                for (i in characterDatas) {
+                    opponentList.dataSource.add({text: i.character.name});
+                }
+                opponentList.onChange = ()->{
+                    for (i in characterDatas) {
+                        if (i.character.name == opponentList.text) {
+                            loadCharacter(i, "opponent");
+                            opponentList.text = "Opponent: " + i.character.name;
+                            break;
+                        }
+                    }
+                }
+                stageWindow.addComponent(stageList);
+                stageWindow.addComponent(playerList);
+                stageWindow.addComponent(spectatorList);
+                stageWindow.addComponent(opponentList);
+
+                 var stageNameBox = new HBox();
+                        // Sub Elements
+                var stageNameLabel = new Label();
+                stageNameLabel.text = "Name:";
+                stageNameLabel.marginTop = 6;
+                stageNameBox.addComponent(stageNameLabel);
+                
+                stageName = new TextField();
+                stageName.text = curStageData.stage.name;
+                stageName.color = 0xFFaaaaaa;
+                stageName.onChange = ()->{
+                    curStageData.stage.name = stageName.text;
+                }
+                stageNameBox.addComponent(stageName);
+
+                stageWindow.addComponent(stageNameBox);
+
+                var camStepper = new NumberStepper();
+                camStepper.step = 0.1;
+                camStepper.pos = curStageData.stage.cameraZoom != null ? curStageData.stage.cameraZoom : 1;
+                camStepper.width = 70;
+                camStepper.min = 0;
+                camStepper.onChange = ()->{
+                    curStageData.stage.cameraZoom = camStepper.pos;
+                }
+                //textFields.push(camStepper);
+
+                var camLabel = new Label();
+                camLabel.text = "Default Stage Zoom:";
+                camLabel.marginTop = 7;
+
+                var camBox = new HBox();
+                camBox.addComponent(camLabel);
+                camBox.addComponent(camStepper);
+                stageWindow.addComponent(camBox);
+
+                var label = new Label();
+                label.text = "Props:";
+
+                propList.width = 215;
+                propList.height = 200;
+                propList.onChange = ()->{
+                    var selectedID = propList.selectedItem.text;
+                    var selectedProp;
+                    characterList.selectedItem = null;
+                    characterList.selectedItems = [];
+
+
+                    player.shader = null;
+                    spectator.shader = null;
+                    opponent.shader = null;
+                    
+                    var index = 0;
+                    for (i in propDatas) {
+                        if (currentlyAddedProps[index] != null) {
+                            currentlyAddedProps[index].shader = null;
+                        }
+                        if (i.name == selectedID) {
+                            selectedProp = currentlyAddedProps[index];
+                            brightenShader.data.offset.value = [0.5];
+                        }
+                        index++;
+                    }
+                    if (selectedProp != null) {
+                        selectedProp.shader = brightenShader;
+                    }
+                    trace();
+                }
+                //propList.cameras = [camHUD];
+                stageWindow.addComponent(label);
+                stageWindow.addComponent(propList);
+
+                var buttonBox = new HBox();
+                buttonBox.width = 215;
+
+                var createButton = new Button();
+                createButton.width = (215/2)-2;
+                createButton.text = "Create Prop";
+                createButton.onClick = ()->{
+                    var createPropWindow = new Window();
+                    createPropWindow.title = "Create Prop";
+                    createPropWindow.maximizable = false;
+                    createPropWindow.minimizable = false;
+                    createPropWindow.collapsable = false;
+                    createPropWindow.windowManager = windowManager;
+                    createPropWindow.width = 300;
+                    createPropWindow.height = 160;
+
+                    var propToAdd = {
+                        danceEvery: 0,
+                        zIndex: 20,
+                        position: [0, 0],
+                        scale: [1, 1],
+                        animType: "sparrow",
+                        name: "propName",
+                        isPixel: false,
+                        assetPath: "propPath",
+                        scroll: [1, 1],
+                        animations: []
+                    }
+
+                    var assetPathBox = new HBox();
+                        // Sub Elements
+                    var assetPathLabel = new Label();
+                    assetPathLabel.text = "Asset Path";
+                    assetPathLabel.marginTop = 6;
+                    assetPathBox.addComponent(assetPathLabel);
+                    
+                    var name = new TextField();
+                    name.placeholder = "...";
+                    name.color = 0xFFaaaaaa;
+
+                    var assetPath = new TextField();
+                    assetPath.placeholder = "...";
+                    assetPath.color = 0xFFaaaaaa;
+                    assetPath.onChange = ()->{
+                        propToAdd.assetPath = assetPath.text;
+                        assetPath.color = 0xFFaaaaaa;
+                        name.color = 0xFFaaaaaa;
+                    }
+                    name.onChange = ()->{
+                        propToAdd.name = name.text;
+                        name.color = 0xFFaaaaaa;
+                        assetPath.color = 0xFFaaaaaa;
+                    }
+                    assetPathBox.addComponent(assetPath);
+
+                    
+                        
+                    var nameBox = new HBox();
+
+                    var nameLabel = new Label();
+                    nameLabel.text = "Name:";
+                    nameLabel.marginTop = 6;
+                    nameBox.addComponent(nameLabel);
+                    
+                    nameBox.addComponent(name);
+                    
+                    createPropWindow.addComponent(nameBox);
+                    createPropWindow.addComponent(assetPathBox);
+                    
+                    var confirmButton = new Button();
+                    confirmButton.text = "Confirm";
+                    confirmButton.marginTop = 3;
+                    confirmButton.marginLeft = stageWindow.width - 55;
+                    createPropWindow.addComponent(confirmButton);
+
+                    createPropWindow.screenCenter();
+                    add(createPropWindow);
+                    FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+
+                    confirmButton.onClick = ()->{
+                        trace(name.text);
+                        if (name.text != "" && assetPath.text != "" && name.text != null && assetPath.text != null) {
+                            curStageData.stage.props.push(propToAdd);
+                            reloadPropList();
+                            windowManager.closeWindow(createPropWindow);
+                        } else {
+                            if (name.text == "" || name.text == null) {
+                                name.color = 0xFFFF0000;
+                            }
+                            if (assetPath.text == "" || assetPath.text == null) {
+                                assetPath.color = 0xFFFF0000;
+                            }
+                        }
+                    }
+                }
+
+                var deleteButton = new Button();
+                deleteButton.width = (215/2)-2;
+                deleteButton.text = "Delete Prop";
+                deleteButton.onClick = ()->{
+                    curStageData.stage.props.remove(curPropData);
+                    reloadPropList();
+                }
+
+                var editButton = new Button();
+                editButton.width = 215;
+                editButton.text = "Edit Prop";
+                editButton.onClick = ()->{
+                    var editWindow =  new Window();
+                    editWindow.title = "Edit Prop";
+                    editWindow.maximizable = false;
+                    editWindow.minimizable = false;
+                    editWindow.collapsable = false;
+                    editWindow.width = 300;
+                    editWindow.height = 380;
+                    if (curPropData != null) {
+                        editWindow.title = "Edit Prop: " + curPropData.name;
+
+                        var assetPathBox = new HBox();
+                        // Sub Elements
+                        var assetPathLabel = new Label();
+                        assetPathLabel.text = "Asset Path:";
+                        assetPathLabel.marginTop = 6;
+                        assetPathBox.addComponent(assetPathLabel);
+                        
+                        var assetPath = new TextField();
+                        assetPath.text = curPropData.assetPath;
+                        assetPath.color = 0xFFaaaaaa;
+                        assetPath.onChange = ()->{
+                        // if (!checkFileExists("assets/shared/images/" + assetPath.text + ".png") && !FileUtil.fileExists("assets/shared/images/" + assetPath.text + ".png")) {
+                            //     assetPath.color = 0xFFFF0000;
+                            // } else {
+                            //     assetPath.color = 0xFFaaaaaa;
+                            //     curCharFile.assetPath = assetPath.text;
+                            //     loadCharacter(curCharFile, null, true);
+                            // }
+                            curPropData.assetPath = assetPath.text;
+                        }
+                        assetPathBox.addComponent(assetPath);
+
+                        editWindow.addComponent(assetPathBox);
+                            
+                        var nameBox = new HBox();
+
+                        var nameLabel = new Label();
+                        nameLabel.text = "Name:";
+                        nameLabel.marginTop = 6;
+                        nameBox.addComponent(nameLabel);
+                        
+                        var nameField = new TextField();
+                        nameField.text = curPropData.name;
+                        nameField.color = 0xFFaaaaaa;
+                        nameField.onChange = ()->{
+                            curPropData.name = nameField.text;//trace(nameField.text);
+                            //reloadPropList();
+                            //;
+                        }
+                        nameBox.addComponent(nameField);
+                        
+                        editWindow.addComponent(nameBox);
+
+                        var animTypeBox = new HBox();
+
+                        var animTypeLabel = new Label();
+                        animTypeLabel.text = "Animation Type:";
+                        animTypeLabel.marginTop = 6;
+                        animTypeBox.addComponent(animTypeLabel);
+                        
+                        var animType = new TextField();
+                        animType.text = curPropData.animType != null ? curPropData.animType : "sparrow";
+                        animType.color = 0xFFaaaaaa;
+                        animType.onChange = ()->{
+                            curPropData.animType = animType.text;
+                        }
+                        animTypeBox.addComponent(animType);
+                        
+                        editWindow.addComponent(animTypeBox);
+
+                        curPropSteppers = [];
+                        // -- Offsets -- \\
+                        var offsetsLabel = new Label();
+                        offsetsLabel.text = "Position:";
+                        offsetsLabel.marginTop = 7;
+
+                        var xStepper = new NumberStepper();
+                        xStepper.step = 1;
+                        xStepper.pos = curPropData.position != null ? curPropData.position[0] : 0;
+                        xStepper.width = 80;
+                        xStepper.onChange = ()->{
+                            curPropData.position[0] = xStepper.pos;
+                        }
+                        curPropSteppers.push(xStepper);
+                        
+                        var yStepper = new NumberStepper();
+                        yStepper.step = 1;
+                        yStepper.pos = curPropData.position != null ? curPropData.position[1] : 0;
+                        yStepper.width = 80;
+                        yStepper.onChange = ()->{
+                            curPropData.position[1] = yStepper.pos;
+                        }
+                        curPropSteppers.push(yStepper);
+                        if (curPropData.position == null) {
+                            curPropData.position = [
+                                0,
+                                0
+                            ];
+                        }
+
+                        var offsetsBox = new HBox();
+                        offsetsBox.addComponent(offsetsLabel);
+                        offsetsBox.addComponent(xStepper);
+                        offsetsBox.addComponent(yStepper);
+                        editWindow.addComponent(offsetsBox);
+
+                        // -- Offsets -- \\
+                        var offsetsLabel = new Label();
+                        offsetsLabel.text = "Scroll:";
+                        offsetsLabel.marginTop = 7;
+
+                        var xStepper = new NumberStepper();
+                        xStepper.step = .1;
+                        xStepper.pos = curPropData.scroll != null ? curPropData.scroll[0] : 0;
+                        xStepper.width = 80;
+                        xStepper.onChange = ()->{
+                            curPropData.scroll[0] = xStepper.pos;
+                        }
+                        //curPropSteppers.push(xStepper);
+                        
+                        var yStepper = new NumberStepper();
+                        yStepper.step = .1;
+                        yStepper.pos = curPropData.scroll != null ? curPropData.scroll[1] : 0;
+                        yStepper.width = 80;
+                        yStepper.onChange = ()->{
+                            curPropData.scroll[1] = yStepper.pos;
+                        }
+                        //curPropSteppers.push(yStepper);
+                        if (curPropData.scroll == null) {
+                            curPropData.scroll = [
+                                0,
+                                0
+                            ];
+                        }
+
+                        var offsetsBox = new HBox();
+                        offsetsBox.addComponent(offsetsLabel);
+                        offsetsBox.addComponent(xStepper);
+                        offsetsBox.addComponent(yStepper);
+                        editWindow.addComponent(offsetsBox);
+
+                        // -- Scale -- \\
+                        var scaleStepper = new NumberStepper();
+                        scaleStepper.step = 0.1;
+                        scaleStepper.pos = curPropData.scale[0] != null ? curPropData.scale[0] : 1;
+                        scaleStepper.width = 80;
+                        scaleStepper.min = 0;
+                        scaleStepper.onChange = ()->{
+                            curPropData.scale[0] = scaleStepper.pos;
+                            curPropData.scale[1] = scaleStepper.pos;
+                        }
+
+                        var scaleLabel = new Label();
+                        scaleLabel.text = "Scale:";
+                        scaleLabel.marginTop = 7;
+
+                        var scaleBox = new HBox();
+                        scaleBox.addComponent(scaleLabel);
+                        scaleBox.addComponent(scaleStepper);
+                        editWindow.addComponent(scaleBox);
+
+                        // -- Z Index -- \\
+                        var zIndexStepper = new NumberStepper();
+                        zIndexStepper.step = 0.1;
+                        zIndexStepper.pos = curPropData.zIndex != null ? curPropData.zIndex : 1;
+                        zIndexStepper.width = 80;
+                        zIndexStepper.min = 0;
+                        zIndexStepper.onChange = ()->{
+                            curPropData.zIndex = zIndexStepper.pos;
+                        }
+
+                        var zIndexLabel = new Label();
+                        zIndexLabel.text = "Z Index:";
+                        zIndexLabel.marginTop = 7;
+
+                        var xIndexBox = new HBox();
+                        xIndexBox.addComponent(zIndexLabel);
+                        xIndexBox.addComponent(zIndexStepper);
+                        editWindow.addComponent(xIndexBox);
+
+                        // -- Is Pixel -- \\
+                        var isPixelCheck = new CheckBox();
+                        isPixelCheck.selected = curPropData.isPixel != null ? curPropData.isPixel : false;
+                        isPixelCheck.onChange = ()->{
+                            curPropData.isPixel = isPixelCheck.selected;
+                        }
+
+                        var isPixelLabel = new Label();
+                        isPixelLabel.text = "Is Pixel:";
+                        isPixelLabel.marginTop = 5;
+
+                        var isPixelBox = new HBox();
+                        isPixelBox.addComponent(isPixelLabel);
+                        isPixelBox.addComponent(isPixelCheck);
+                        editWindow.addComponent(isPixelBox);
+
+                        // -- flipX -- \\
+                        var flipXCheck = new CheckBox();
+                        flipXCheck.selected = curPropData.flipX != null ? curPropData.flipX : false;
+                        flipXCheck.onChange = ()->{
+                            curPropData.flipX = flipXCheck.selected;
+                        }
+
+                        var flipXLabel = new Label();
+                        flipXLabel.text = "Flip X:";
+                        flipXLabel.marginTop = 5;
+
+                        var flipXBox = new HBox();
+                        flipXBox.addComponent(flipXLabel);
+                        flipXBox.addComponent(flipXCheck);
+                        editWindow.addComponent(flipXBox);
+
+                        // -- flipY -- \\
+                        var flipYCheck = new CheckBox();
+                        flipYCheck.selected = curPropData.flipY != null ? curPropData.flipY : false;
+                        flipYCheck.onChange = ()->{
+                            curPropData.flipY = flipYCheck.selected;
+                        }
+
+                        var flipYLabel = new Label();
+                        flipYLabel.text = "Flip Y:";
+                        flipYLabel.marginTop = 5;
+
+                        var flipYBox = new HBox();
+                        flipYBox.addComponent(flipYLabel);
+                        flipYBox.addComponent(flipYCheck);
+                        editWindow.addComponent(flipYBox);
+                    } else {
+                        var label = new Label();
+                        label.text = "Please select a prop first.";
+                        editWindow.addComponent(label);
+                        editWindow.height = 115;
+                    }
+                    editWindow.screenCenter();
+                    // curPropData
+                     
+                    var ok = new Button();
+                    ok.text = "Confirm";
+                    ok.marginTop = 3;
+                    ok.marginLeft = stageWindow.width - 55;
+
+                    editWindow.windowManager = windowManager;
+                    editWindow.addComponent(ok);
+                    add(editWindow);
+                    ok.onClick = ()->{
+                        reloadPropList();
+                        windowManager.closeWindow(editWindow);
+                    }
+
+                    
+                    
+                    FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+                    
+                }
+
+                buttonBox.addComponent(createButton);
+                buttonBox.addComponent(deleteButton);
+                
+                stageWindow.addComponent(buttonBox);
+                stageWindow.addComponent(editButton);
+
+                var characterLabel = new Label();
+                characterLabel.text = "Characters:";
+
+                characterList = new ListView();
+                characterList.width = 215;
+                //characterList.height = 100;
+                characterList.onChange = ()->{
+                    propList.selectedItem = null;
+                    propList.selectedItems = [];
+                    player.shader = null;
+                    spectator.shader = null;
+                    opponent.shader = null;
+                    for (i in currentlyAddedProps) {
+                        i.shader = null;
+                    }
+                    switch (characterList.selectedItem.text) {
+                        case "Player":
+                            player.shader = brightenShader;
+                        case "Spectator":
+                            spectator.shader = brightenShader;
+                        case "Opponent":
+                            opponent.shader = brightenShader;
+                    }
+                    brightenShader.data.offset.value = [0.5];
+                }
+                characterList.dataSource.add({ text: "Player"    });
+                characterList.dataSource.add({ text: "Spectator" });
+                characterList.dataSource.add({ text: "Opponent"  });
+                //propList.cameras = [camHUD];
+                stageWindow.addComponent(characterLabel);
+                stageWindow.addComponent(characterList);
+
+                var editCharButton = new Button();
+                editCharButton.width = 215;
+                editCharButton.text = "Edit Selected Character";
+                editCharButton.onClick = ()->{
+                    var curCharacter = null;
+                    var charType = "";
+                    var stageChar = null;
+                    for (i in [player, spectator, opponent]) {
+                        if (i.shader == brightenShader) {
+                            curCharacter = i;
+                            switch (i) {
+                                case player:
+                                    charType = "Player";
+                                    stageChar = curStageData.stage.characters.bf;
+                                case spectator:
+                                    charType = "Spectator";
+                                    stageChar = curStageData.stage.characters.gf;
+                                case opponent:
+                                    charType = "Opponent";
+                                    stageChar = curStageData.stage.characters.dad;
+                            }
+                            break;
+                        }
+                    }
+                    var editWindow =  new Window();
+                    editWindow.maximizable = false;
+                    editWindow.minimizable = false;
+                    editWindow.collapsable = false;
+                    editWindow.windowManager = windowManager;
+                    editWindow.width = 300;
+                    editWindow.height = 155;
+                    editWindow.screenCenter();
+                    add(editWindow);
+                    FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+
+                    if (curCharacter == null) {
+                        editWindow.height = 115;
+                        editWindow.screenCenter();
+                        editWindow.title = "Edit Character";
+                        var label = new Label();
+                        label.text = "Please select a character first.";
+                        editWindow.addComponent(label);
+
+                        var ok = new Button();
+                        ok.text = "Confirm";
+                        ok.marginTop = 3;
+                        ok.marginLeft = 200;
+                        ok.onClick = ()-> {
+                            windowManager.closeWindow(editWindow);
+                        }
+                        
+                        editWindow.addComponent(ok);
+
+                        return; 
+                    }
+                    
+                    editWindow.title = "Edit Character: " + charType;
+
+                    var zIndexStepper = new NumberStepper();
+                    zIndexStepper.step = 1;
+                    zIndexStepper.pos = stageChar.zIndex != null ? stageChar.zIndex : 1;
+                    zIndexStepper.width = 80;
+                    zIndexStepper.min = 0;
+
+                    var zIndexLabel = new Label();
+                    zIndexLabel.text = "Z Index:";
+                    zIndexLabel.marginTop = 7;
+
+                    var zIndexBox = new HBox();
+                    zIndexBox.addComponent(zIndexLabel);
+                    zIndexBox.addComponent(zIndexStepper);
+                    editWindow.addComponent(zIndexBox);
+                    
+
+                    // -- Offsets -- \\
+                    var offsetsLabel = new Label();
+                    offsetsLabel.text = "Position:";
+                    offsetsLabel.marginTop = 7;
+
+                    var xStepper = new NumberStepper();
+                    xStepper.step = 1;
+                    xStepper.pos = stageChar.position != null ? stageChar.position[0] : 0;
+                    xStepper.width = 80;
+                    xStepper.onChange = ()->{
+                        stageChar.position[0] = xStepper.pos;
+                    }
+                    //curPropSteppers.push(xStepper);
+                    
+                    var yStepper = new NumberStepper();
+                    yStepper.step = 1;
+                    yStepper.pos = stageChar.position != null ? stageChar.position[1] : 0;
+                    yStepper.width = 80;
+                    yStepper.onChange = ()->{
+                        stageChar.position[1] = yStepper.pos;
+                    }
+                    var offsetsBox = new HBox();
+                    offsetsBox.addComponent(offsetsLabel);
+                    offsetsBox.addComponent(xStepper);
+                    offsetsBox.addComponent(yStepper);
+                    editWindow.addComponent(offsetsBox);
+
+                    var ok = new Button();
+                    ok.text = "Confirm";
+                    ok.marginTop = 3;
+                    ok.marginLeft = 200;
+                    ok.onClick = ()-> {
+                        stageChar.zIndex = zIndexStepper.pos;
+                        reloadPropList();
+                        windowManager.closeWindow(editWindow);
+                    }
+                    editWindow.addComponent(ok);
+                    FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+                }
+                stageWindow.addComponent(editCharButton);
+                //stageWindow.draggable = true;
+                add(stageWindow);
+                FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+            } else {
+                windowManager.closeWindow(stageWindow);
+            }
+        }
+       
+        windowsMenu.addComponent(stageDataOption);
+
+        var songDataOption = new MenuCheckBox();
+        songDataOption.text = "Song Data";
+        songDataOption.selected = false;
+        songDataOption.onChange = ()->{
+            //songWindowOpened = !songWindowOpened;
+            //songDataOption.selected = songWindowOpened;
+            if (songDataOption.selected) {
+                songWindow = new Window();
+                songWindow.cameras = [camHUD];
+                songWindow.windowManager = windowManager;
+                songWindow.title = "Song Data";
+                songWindow.maximizable = false;
+                songWindow.minimizable = false;
+                songWindow.collapsable = false;
+                songWindow.width = 250;
+                songWindow.height = 200;
+                songWindow.screenCenter();
+                songWindow.x = FlxG.width - songWindow.width - 20 - songWindow.width;
+                songWindow.y = topBar.height + 10;
+
+
+
+                var songList = new DropDown();
+                songList.text = save.data.editorSong.title;
+                songList.searchable = true;
+                songList.width = 215;
+                songList.dataSource.add({text: "Artistic Expression"});
+                songList.dataSource.add({text: "Freeplay Random"});
+                songList.dataSource.add({text: "Breakfast"});
+                songList.dataSource.add({text: "Breakfast (Pico)"});
+                songList.dataSource.add({text: "Stay Funky"});
+                songList.dataSource.add({text: "Results Excellent"});
+                songList.dataSource.add({text: "Hands Up! (Excellent Pico)"});
+                songList.dataSource.add({text: "Results Good"});
+                songList.dataSource.add({text: "Get Out The Way! (Good Pico)"});
+                //for (i in songDatas) {
+                    //songList.dataSource.add({text: i.song.name});
+                //}
+                songList.onChange = ()->{
+                    switch (songList.text) {
+                        case "Artistic Expression":
+                            FunkinSound.playMusic("chartEditorLoop", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            var daSound = FunkinSound.load(Paths.music("chartEditorLoop"));
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Artistic Expression",
+                                key: "chartEditorLoop"
+                            }
+                        case "Breakfast":
+                            FunkinSound.playMusic("breakfast", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Breakfast",
+                                key: "breakfast"
+                            }
+                        case "Breakfast (Pico)":
+                            FunkinSound.playMusic("breakfast-pico", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Breakfast (Pico)",
+                                key: "breakfast-pico"
+                            }
+                        case "Freeplay Random":
+                            FunkinSound.playMusic("freeplayRandom", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Freeplay Random",
+                                key: "freeplayRandom"
+                            }
+                        case "Stay Funky":
+                            FunkinSound.playMusic("stayFunky", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Stay Funky",
+                                key: "stayFunky"
+                            }
+                        case "Results Excellent":
+                            FunkinSound.playMusic("resultsEXCELLENT", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Results Excellent",
+                                key: "resultsEXCELLENT"
+                            }
+                        case "Hands Up! (Excellent Pico)":
+                            FunkinSound.playMusic("resultsEXCELLENT-pico", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Hands Up! (Excellent Pico)",
+                                key: "resultsEXCELLENT-pico"
+                            }
+                        case "Results Good":
+                            FunkinSound.playMusic("resultsNORMAL", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Results Good",
+                                key: "resultsNORMAL"
+                            }
+                        case "Get Out The Way! (Good Pico)":
+                            FunkinSound.playMusic("resultsNORMAL-pico", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Get Out The Way! (Good Pico)",
+                                key: "resultsNORMAL-pico"
+                            }
+
+                    }
+                    currentTrack = save.data.editorSong.title;
+                    
+                    // for (i in songDatas) {
+                    //     if (i.song.name == songList.text) {
+                    //         loadStage(i);
+                    //         break;
+                    //     }
+                    // }
+                }
+                songWindow.addComponent(songList);
+                var boxForWaveform = new ListView();
+                boxForWaveform.width = 215;
+                boxForWaveform.height = 100;
+                //boxForWaveform.dataSource.add({ text: "" });
+
+                waveform.width = 215;
+
+                waveform.x = songWindow.x + (songWindow.width/2)-(waveform.width/2);
+                waveform.y = songWindow.y + 85;
+
+                songWindow.addComponent(boxForWaveform);
+                //songWindow.draggable = true;
+                add(songWindow);
+            } else {
+                windowManager.closeWindow(songWindow);
+            }
+        }
+        windowsMenu.addComponent(songDataOption);
+
+        var toolsMenu = new Menu();
+        toolsMenu.text = "Tools";
+
+        var crashItem = new MenuItem();
+        crashItem.text = "Crash The Game";
+        crashItem.onClick = ()->{
+            doCrash = true;
+            throw "Fuck You";
+        }
+        toolsMenu.addComponent(crashItem);
+
+        var watermark = new Label();
+        watermark.text = "Nova Stage Editor " + editorVersion;
+        watermark.x = FlxG.width - 175;
+        watermark.y = 11;
+        watermark.cameras = [camHUD];
+        add(watermark);
+
+        topBar.addComponent(fileMenu);
+        topBar.addComponent(windowsMenu);
+        topBar.addComponent(toolsMenu);
+
+        var converterMenu = new Menu();
+        converterMenu.text = "Converters";
+
+        var comingSoon = new MenuItem();
+        comingSoon.text = "CNE Conversion Coming Soon!";
+        converterMenu.addComponent(comingSoon);
+        topBar.addComponent(converterMenu);
+
+
+
+        
+
+
+        // stageWindow = new Window();
+        // stageWindow.windowManager = windowManager;
+        // stageWindow.title = "Stage Data";    
+        // stageWindow.maximizable = false;
+        // stageWindow.minimizable = false;
+        // stageWindow.collapsable = false;
+        // stageWindow.screenCenter();
+        // //stageWindow.draggable = true;
+        // add(stageWindow);
+
+
+        // var stageList = new DropDown();
+        // stageList.text = "Pick Stage";
+        // stageList.width = 200;
+        // for (i in stageDatas) {
+        //     stageList.dataSource.add({text: i.stage.name});
+        // }
+        // stageList.onChange = ()->{
+
+        // }
+
+
+        //stageWindow.addComponent(stageList);
+        propList = new ListView();
+        loadStage(stageDatas[0]);
+        
+    }
+
+    function checkIfMatching(obj1, obj2) {
+        var matching = true;
+        var things = [];
+        for (i in ReflectUtil.getFieldsOf(obj1)) {
+            things.push(i.toString());
+        }
+        for (i in things) {
+            var value1 = ReflectUtil.getField(obj1, i)+"";
+            var value2 = ReflectUtil.getField(obj2, i)+"";
+            if (value1 != value2) {
+                matching = false;
+            }
+        }
+        return matching;
+        //for (i in ["flipX", "flipY", "offsets", "name", "scale"])
+    }
+
+    function fixPath(path) {
+        var stringSplit = path.split("\\");
+        while (stringSplit[0] != "mods") {
+            stringSplit.shift();
+        }
+        path = stringSplit.join("/");
+        return path;
+    }
+
+    var timer = 1;
+    
+    function update(elapsed) {
+        super.update(elapsed);
+        
+        if (FlxG.keys.justPressed.R && FlxG.keys.pressed.CONTROL) {
+            cameraTarget.zoom = curStageData.stage.cameraZoom;
+        }  
+
+        if (doCrash) {
+            if (timer == 0) {
+                var crashBox = new HBox();
+                crashBox.addComponent(crashBox);
+            }
+            timer--;
+        }
+        if (waveform != null) {
+			waveform.time = (FlxG.sound.music.time / 1000);
+            waveform.cameras = [camHUD];
+            if (songWindow != null) {
+                waveform.visible = songWindow.visible;
+                waveform.x = songWindow.x + (songWindow.width/2)-(waveform.width/2);
+                waveform.y = songWindow.y + 85;
+                remove(waveform);
+                insert(members.indexOf(songWindow)+1, waveform);
+            } else {
+                waveform.visible = false;
+            }
+        }
+        
+
+        brightenShader.data.offset.value[0] = MathUtil.coolLerp(brightenShader.data.offset.value[0], 0, 0.05);
+        brightenShader2.data.offset.value[0] = MathUtil.coolLerp(brightenShader2.data.offset.value[0], 0, 0.05);
+
+        curPropData = null;
+        var propIndex = 0;
+        for (i in propDatas) {
+            if (currentlyAddedProps[propIndex] != null) {
+                if (currentlyAddedProps[propIndex].shader == brightenShader) {
+                    curPropData = i;
+                }
+            }
+            propIndex++;
+        }
+
+        if (controls.BACK) {
+            //FlxG.switchState(() -> new MainMenuState());
+        }
+        //windowTitleSuffix = " - " + curCharacter;
+        if (unsavedChanges) {
+            windowTitleSuffix += " *";
+        }
+
+        var disableInput = false;
+        for (member in members) {
+            
+            if (member != null && member.visible) {
+                // if (FlxG.mouse.pressed && member == windowManager.topMostWindow) {
+                //     var tophitbox = new FlxSprite();
+                //     tophitbox.width = member.width;
+                //     tophitbox.height = 44;
+                //     tophitbox.x = member.x + FlxG.mouse.deltaX - FlxG.camera.scroll.x;
+                //     tophitbox.y = member.y + FlxG.mouse.deltaY - FlxG.camera.scroll.y;
+                //     if (FlxG.mouse.overlaps(tophitbox) && FlxG.mouse.pressed) {
+                //         member.x += FlxG.mouse.deltaX;
+                //         member.y += FlxG.mouse.deltaY;
+                //     }
+                //     if (member.y < -3 && !FlxG.mouse.pressed) {
+                //         member.y = -3;
+                //     }
+                    
+                // }
+                //if (FlxG.mouse.overlaps(member))
+                var typesToCancelInput = ["MenuBar", "Menu", "Window", "DropDown"];
+                var classArray = ReflectUtil.getClassNameOf(member).split(".");
+                var theClass = classArray[classArray.length-1];
+                if (theClass == "Box" || theClass == "Menu") {
+                    member.cameras = [camDropDown];
+                }
+                if (FlxG.mouse.overlaps(member) && typesToCancelInput.contains(theClass)) {
+                    //trace(theClass);
+                    disableInput = true;
+                }
+            }
+        }
+
+        if (curStageData != null) {
+            remove(player);
+            insert(curStageData.stage.characters.bf.zIndex, player);
+            remove(spectator);
+            insert(curStageData.stage.characters.gf.zIndex, spectator);
+            remove(opponent);
+            insert(curStageData.stage.characters.dad.zIndex, opponent);
+            var propIndex = 0;
+            for (i in currentlyAddedProps) {
+                //i.kill();
+                if (i.alive) {
+                    remove(i);
+                    if (propDatas[propIndex] != null) {
+                        insert(propDatas[propIndex].zIndex, i);
+                    } else {
+                        //currentlyAddedProps.remove(i);
+                        //reloadPropList();
+                    }
+                    propIndex++;
+                }
+            }
+        }
+
+        WindowUtil.setWindowTitle(windowTitlePrefix + "Friday Night Funkin'" + windowTitleSuffix);
+
+        FlxG.camera.scroll.x = MathUtil.coolLerp(FlxG.camera.scroll.x, cameraTarget.x, 0.1);
+        FlxG.camera.scroll.y = MathUtil.coolLerp(FlxG.camera.scroll.y, cameraTarget.y, 0.1);
+        FlxG.camera.zoom = MathUtil.coolLerp(FlxG.camera.zoom, cameraTarget.zoom, 0.1);
+
+        disableInput = false;
+        if (!disableInput) {
+            var shiftAmount = FlxG.keys.pressed.SHIFT ? 15 : 5;
+
+            if (FlxG.keys.pressed.A) {
+                cameraTarget.x -= shiftAmount;
+            } else if (FlxG.keys.pressed.D) {
+                cameraTarget.x += shiftAmount;
+            }
+
+            if (FlxG.keys.pressed.W) {
+                cameraTarget.y -= shiftAmount;
+            } else if (FlxG.keys.pressed.S) {
+                cameraTarget.y += shiftAmount;
+            }
+
+            if (FlxG.keys.pressed.Q) {
+                cameraTarget.zoom -= shiftAmount/1000;
+            } else if (FlxG.keys.pressed.E) {
+                cameraTarget.zoom += shiftAmount/1000;
+            }
+            if (cameraTarget.zoom < 0.01) {
+                cameraTarget.zoom = 0.01;
+            }
+        
+            var propIndex = 0;
+            for (i in propDatas) {
+                if (currentlyAddedProps[propIndex] != null) {
+                    if (currentlyAddedProps[propIndex].shader == brightenShader) {
+                        //trace("Current Selected Prop: " + i.name);
+                        if (FlxG.keys.justPressed.LEFT) {
+                            //i.position[0] -= 10;
+                        }
+                        if (FlxG.mouse.overlaps(currentlyAddedProps[propIndex]) && FlxG.mouse.pressed) {
+                            var mult = (cameraTarget.zoom*2);
+                            i.position[0] += FlxG.mouse.deltaX;
+                            i.position[1] += FlxG.mouse.deltaY;
+                            i.scale[0] -= FlxG.mouse.wheel/10;
+                            i.scale[1] -= FlxG.mouse.wheel/10;
+                        }
+                    }
+                    currentlyAddedProps[propIndex].scale.x = MathUtil.coolLerp(currentlyAddedProps[propIndex].scale.x, i.scale[0], 0.2);
+                    currentlyAddedProps[propIndex].scale.y = MathUtil.coolLerp(currentlyAddedProps[propIndex].scale.y, i.scale[1], 0.2);
+                    currentlyAddedProps[propIndex].scrollFactor.x = MathUtil.coolLerp(currentlyAddedProps[propIndex].scrollFactor.x, i.scroll[0], 0.2);
+                    currentlyAddedProps[propIndex].scrollFactor.y = MathUtil.coolLerp(currentlyAddedProps[propIndex].scrollFactor.y, i.scroll[1], 0.2);
+                    currentlyAddedProps[propIndex].x = i.position[0]+(offsetX);
+                    currentlyAddedProps[propIndex].y = i.position[1]+(offsetY);
+                    currentlyAddedProps[propIndex].flipX = i.flipX != null ? i.flipX : false;
+                    currentlyAddedProps[propIndex].flipY = i.flipY != null ? i.flipY : false;
+                    currentlyAddedProps[propIndex].antialiasing = i.isPixel != null ? !i.isPixel : true;
+                    if (curPropSteppers != [] && curPropSteppers[0] != null) {
+                        if (curPropSteppers[0] + (offsetX) != currentlyAddedProps[propIndex].x) {
+                            curPropSteppers[0].pos = currentlyAddedProps[propIndex].x - (offsetX);
+                            curPropSteppers[1].pos = currentlyAddedProps[propIndex].y - (offsetY);
+                        }
+                    }
+                }
+                propIndex++;
+            }
+
+            if (curStageData != null) {
+                for (i in [player, spectator, opponent]) {
+                    switch (i) {
+                        case player:
+                            if (FlxG.mouse.overlaps(i) && FlxG.mouse.pressed && i.shader == brightenShader) {
+                                curStageData.stage.characters.bf.position[0] += FlxG.mouse.deltaX;
+                                curStageData.stage.characters.bf.position[1] += FlxG.mouse.deltaY;
+                            }
+                            i.x = curStageData.stage.characters.bf.position[0] + (offsetX);
+                            i.y = curStageData.stage.characters.bf.position[1] + (offsetY);
+                            i.x -= i.width/2;
+                            i.y -= i.height;
+                        case spectator:
+                            if (FlxG.mouse.overlaps(i) && FlxG.mouse.pressed && i.shader == brightenShader) {
+                                curStageData.stage.characters.gf.position[0] += FlxG.mouse.deltaX;
+                                curStageData.stage.characters.gf.position[1] += FlxG.mouse.deltaY;
+                            }
+                            i.x = curStageData.stage.characters.gf.position[0] + (offsetX);
+                            i.y = curStageData.stage.characters.gf.position[1] + (offsetY);
+                            i.x -= i.width/2;
+                            i.y -= i.height;
+                        case opponent:
+                            if (FlxG.mouse.overlaps(i) && FlxG.mouse.pressed && i.shader == brightenShader) {
+                                curStageData.stage.characters.dad.position[0] += FlxG.mouse.deltaX;
+                                curStageData.stage.characters.dad.position[1] += FlxG.mouse.deltaY;
+                            }
+                            i.x = curStageData.stage.characters.dad.position[0] + (offsetX);
+                            i.y = curStageData.stage.characters.dad.position[1] + (offsetY);
+                            i.x -= i.width/2;
+                            i.y -= i.height;
+                    }
+                    //i.x += offsetX;
+                    //i.y += FlxG.height/2;
+                }
+            }
+        }
+        //disableInput = false;
+
+        if (FlxG.mouse.justPressed) {
+            createClickCircle();
+            FunkinSound.playOnce(Paths.sound("chartingSounds/ClickDown"), 1);
+        } else if (FlxG.mouse.justReleased) {
+            FunkinSound.playOnce(Paths.sound("chartingSounds/ClickUp"), 1);
+        }
+        //Conductor.instance.update();
+        
+        get_conductorInUse().update();
+    }
+
+    override function stepHit() {
+        super.stepHit();
+        var step = get_conductorInUse().currentStep;
+        //if (g)
+        if (step % 4 == 1) {
+            //FlxG.camera.zoom += 0.05;
+        }
+    }
+
+    override function beatHit() {
+        super.beatHit();
+        var beat = get_conductorInUse().currentBeat;
+        trace("Hit Beat");
+        if (!FlxG.keys.pressed.Q && !FlxG.keys.pressed.E && !FlxG.mouse.pressed) {
+            FlxG.camera.zoom *= 1.02;
+        }
+        //if (g)
+        
+        for (char in [player, spectator, opponent]) {
+            if (char.animation != null) {
+                if (beat % 2 == 0) {
+                    if (char.animation.exists("idle")) {
+                        if (char.animation.name == "idle" && !char.animation.curAnim.looped) {
+                            char.animation.play("idle", true);
+                        }
+                    }
+                }
+                if (char.animation.exists("danceLeft")) {
+                    if (char.animation.name == "danceLeft") {
+                        char.animation.play("danceRight", true);
+                    } else if (char.animation.name == "danceRight") {
+                        char.animation.play("danceLeft", true);
+                    }
+                }
+            }
+        }
+	}
+
+    function destroy() {
+        super.destroy();
+        WindowUtil.setWindowTitle("Friday Night Funkin'");
+    }
+}
