@@ -55,15 +55,19 @@ import haxe.ui.core.TextDisplay;
 import haxe.ui.components.Label;
 import haxe.ui.components.Button;
 import haxe.ui.components.TabBar;
+import haxe.ui.components.Column;
 import haxe.ui.components.TextArea;
 import haxe.ui.components.CheckBox;
 import haxe.ui.components.TextField;
 import haxe.ui.components.NumberStepper;
 
 import haxe.ui.containers.dialogs.Dialog;
+import haxe.ui.containers.Box;
 import haxe.ui.containers.HBox;
+import haxe.ui.containers.Header;
 import haxe.ui.containers.TabView;
 import haxe.ui.containers.ListView;
+import haxe.ui.containers.TableView;
 import haxe.ui.containers.menus.Menu;
 import haxe.ui.containers.menus.MenuBar;
 import haxe.ui.containers.windows.Window;
@@ -1440,27 +1444,101 @@ class StageEditor extends MusicBeatState {
         helpShortcuts.shortcutText = 'F1';
         helpShortcuts.onClick = ()->{
 
-            var helpCard = new Dialog();
-            helpCard.width = 500;
-            helpCard.height = 600;
-            helpCard.y = 100;
-            helpCard.x = 100;
-            add(helpCard);
-
+            var helpWindow = new Window();
+            helpWindow.title = 'Help';
+            helpWindow.windowManager = windowManager;
+            helpWindow.y = 100;
+            helpWindow.x = 100;
+            helpWindow.width = 500;
+            helpWindow.height = 600;
+            helpWindow.screenCenter();
+            helpWindow.maximizable = false;
+            helpWindow.minimizable = false;
+            helpWindow.collapsable = false;
+            add(helpWindow);
 
             var helpTabs = new TabView();
-            helpTabs.width = 300;
-            helpTabs.height = 300;
+            helpTabs.width = 465;
+            helpTabs.height = 525;
 
-            var helpTabBar = new TabBar();
-            helpTabBar.text = 'Test';
-            helpTabs.addComponent(helpTabBar);
+            var helpTabBarGuide = new Box();
+            helpTabBarGuide.text = 'Guide';
+            helpTabs.addComponent(helpTabBarGuide);
+
+            var guideLabel = new Label();
+            guideLabel.width = helpTabs.width;
+            guideLabel.text = "So you decided you can't figure out anything... well that makes two of us!\n\n" + 
+            "Saldy not much is here at the moment so how about you take a look at the two other tabs to pass the time! You might learn a thing or two!" + 
+            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" + 
+            "to be changed.";
+            helpTabBarGuide.addComponent(guideLabel);
+
+            var helpTabBarShortcuts = new Box();
+            helpTabBarShortcuts.text = 'Keybind';
+            helpTabs.addComponent(helpTabBarShortcuts);
+
+            helpTabelView = new TableView();
+            helpTabelView.height = helpTabs.height - 45;
+            helpTabBarShortcuts.addComponent(helpTabelView);
+
+            var helpHeader = new Header();
+            helpTabelView.addComponent(helpHeader);
+
+            var actionColumn = new Column();
+            actionColumn.text = 'Action';
+            actionColumn.width = (helpTabs.width/2) - 9;
+            helpHeader.addComponent(actionColumn);
             
-            var helpTabBar = new TabBar();
-            helpTabBar.text = 'Test';
-            helpTabs.addComponent(helpTabBar);
+            var keybindColumn = new Column();
+            keybindColumn.text = 'Keybind';
+            keybindColumn.width = (helpTabs.width/2) - 9;
+            helpHeader.addComponent(keybindColumn);
 
-            helpCard.addComponent(helpTabs);
+            var keybindText = new ListView();
+            keybindText.marginTop = 25;
+            keybindText.allowInteraction = false;
+            keybindText.width = helpTabs.width - 16;
+            
+            keybindText.dataSource.add( {text: "Show User Guide                 F1"} );
+            keybindText.dataSource.add( {text: "Open Stage                      Ctrl + O"} );
+            keybindText.dataSource.add( {text: "New State                       Ctrl + N"} );
+            keybindText.dataSource.add( {text: "Save                            Ctrl + S"} );
+            keybindText.dataSource.add( {text: "Save As                         Ctrl + Shift + S"} );
+            keybindText.dataSource.add( {text: "Reset Camera Position           Ctrl + R"} );
+            keybindText.dataSource.add( {text: "Reset Camera Zoom               Ctrl + Shift+ R"} );
+            keybindText.dataSource.add( {text: "Create/Add Prop                 Ctrl + A"} );
+            keybindText.dataSource.add( {text: "Deleted Selected Prop           Delete"} );
+            keybindText.dataSource.add( {text: "Exit                            Ctrl + Q"} );
+            helpTabBarShortcuts.addComponent(keybindText);
+
+            var helpTabExtra = new Box();
+            helpTabExtra.text = 'Change Log';
+            helpTabs.addComponent(helpTabExtra);
+
+            var changelogText = new Label();
+            changelogText.width = helpTabs.width;
+            changelogText.text = "Change Log:" +
+            "\nNova Stage Editor " + editorVersion +
+            "\n\n" + editorVersion + "\n" +
+            "Initial Release. Basic Editor Functionality";
+            helpTabExtra.addComponent(changelogText);
+
+            // var keybindKey = new ListView();
+            // keybindKey.width = (helpTabs.width)/2 - 6;
+            // keybindKey.marginTop = 25;
+            // keybindKey.marginLeft = 223;
+            
+            // keybindKey.dataSource.add( {text: "F1"} );
+            // keybindKey.dataSource.add( {text: "Ctrl + O"} );
+            // keybindKey.dataSource.add( {text: "Ctrl + N"} );
+            // keybindKey.dataSource.add( {text: "Ctrl + S"} );
+            // keybindKey.dataSource.add( {text: "Ctrl + Shift + S"} );
+            // keybindKey.dataSource.add( {text: "Ctrl A"} );
+            // keybindKey.dataSource.add( {text: "Delete"} );
+            // helpTabBarShortcuts.addComponent(keybindKey);
+            
+            helpWindow.addComponent(helpTabs);
+
         }
         
         help.addComponent(helpShortcuts);
@@ -1487,7 +1565,6 @@ class StageEditor extends MusicBeatState {
         // stageList.onChange = ()->{
 
         // }
-
 
         //stageWindow.addComponent(stageList);
         propList = new ListView();
@@ -1757,7 +1834,7 @@ class StageEditor extends MusicBeatState {
     override function beatHit() {
         super.beatHit();
         var beat = get_conductorInUse().currentBeat;
-        trace("Hit Beat");
+        // trace("Hit Beat");
         if (!FlxG.keys.pressed.Q && !FlxG.keys.pressed.E && !FlxG.mouse.pressed) {
             FlxG.camera.zoom *= 1.02;
         }
