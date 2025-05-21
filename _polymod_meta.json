@@ -7,8 +7,15 @@
       "name": "Nebula S. Nova",
       "icon": "nebula",
       "color": "#9500ff",
-      "roles": "Coder",
+      "roles": "Coder (Like alot of it 💀)",
       "url": "https://www.youtube.com/@ChinosModded"
+    },
+	  {
+        "name": "GENZU",
+        "icon": "genzu",
+        "color": "#ff9ecf",
+        "roles": "Coder (Finishing Touches), Plus Awesome",
+        "url": "https://www.youtube.com/@_genzu"
     }
   ],
   "api_version": "0.6.4",
