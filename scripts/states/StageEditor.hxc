@@ -119,6 +119,8 @@ class StageEditor extends MusicBeatState {
     
     // ---------------- \\
     
+    var helpShortcuts;
+    
     var FILE_FILTER_XML:FileFilter = new FileFilter("Codename Stage File", "*.xml");
 
     var Converters;
@@ -228,6 +230,140 @@ class StageEditor extends MusicBeatState {
         return Assets.exists(path);
     }
 
+    function openUserGuide() {
+        FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+
+        var helpWindow = new Window();
+        helpWindow.title = 'Help';
+        helpWindow.windowManager = windowManager;
+        helpWindow.y = 100;
+        helpWindow.x = 100;
+        helpWindow.width = 500;
+        helpWindow.height = 600;
+        helpWindow.screenCenter();
+        helpWindow.maximizable = false;
+        helpWindow.minimizable = false;
+        helpWindow.collapsable = false;
+        add(helpWindow);
+
+        var helpTabs = new TabView();
+        helpTabs.width = 465;
+        helpTabs.height = 525;
+
+        var helpTabBarGuide = new Box();
+        helpTabBarGuide.text = 'Guide';
+        helpTabs.addComponent(helpTabBarGuide);
+
+        var guideLabel = new Label();
+        guideLabel.width = helpTabs.width;
+        guideLabel.text = "So you decided you can't figure out anything... well that makes two of us!\n\n" + 
+        "Saldy not much is here at the moment so how about you take a look at the two other tabs to pass the time! You might learn a thing or two!" + 
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" + 
+        "to be changed.";
+        helpTabBarGuide.addComponent(guideLabel);
+
+        var helpTabBarShortcuts = new Box();
+        helpTabBarShortcuts.text = 'Keybind';
+        helpTabs.addComponent(helpTabBarShortcuts);
+
+        helpTabelView = new TableView();
+        helpTabelView.height = helpTabs.height - 45;
+        helpTabBarShortcuts.addComponent(helpTabelView);
+
+        var helpHeader = new Header();
+        helpTabelView.addComponent(helpHeader);
+
+        var actionColumn = new Column();
+        actionColumn.text = 'Action';
+        actionColumn.width = (helpTabs.width/2) - 9;
+        helpHeader.addComponent(actionColumn);
+        
+        var keybindColumn = new Column();
+        keybindColumn.text = 'Keybind';
+        keybindColumn.width = (helpTabs.width/2) - 9;
+        helpHeader.addComponent(keybindColumn);
+
+        var keybindText = new ListView();
+        keybindText.marginTop = 25;
+        keybindText.allowInteraction = false;
+        keybindText.width = helpTabs.width - 16;
+        
+        keybindText.dataSource.add( {text: "Show User Guide                 F1"} );
+        //keybindText.dataSource.add( {text: "Open Stage                      Ctrl + O"} );
+        //keybindText.dataSource.add( {text: "New State                       Ctrl + N"} );
+        keybindText.dataSource.add( {text: "Save                            Ctrl + S"} );
+        keybindText.dataSource.add( {text: "Save As                         Ctrl + Shift + S"} );
+        //keybindText.dataSource.add( {text: "Reset Camera Position           Ctrl + R"} );
+        keybindText.dataSource.add( {text: "Reset Camera Zoom               Ctrl + Shift + R"} );
+        //keybindText.dataSource.add( {text: "Create/Add Prop                 Ctrl + A"} );
+        //keybindText.dataSource.add( {text: "Deleted Selected Prop           Delete"} );
+        keybindText.dataSource.add( {text: "Exit                            Ctrl + Q"} );
+        helpTabBarShortcuts.addComponent(keybindText);
+
+        var helpTabExtra = new Box();
+        helpTabExtra.text = 'Change Log';
+        helpTabs.addComponent(helpTabExtra);
+
+        var changelogText = new Label();
+        changelogText.width = helpTabs.width;
+        changelogText.text = "Nova Stage Editor " + editorVersion +
+        "\nChange Log:" +
+        "\n\n" + editorVersion + "\n" +
+        "Initial Release. Basic Editor Functionality";
+        helpTabExtra.addComponent(changelogText);
+
+        var creditsTab = new Box();
+        creditsTab.text = 'Credits';
+        helpTabs.addComponent(creditsTab);
+
+        var creditsLabel = new Label();
+        creditsLabel.width = helpTabs.width;
+        creditsLabel.text = "Credits:";
+        creditsTab.addComponent(creditsLabel);
+
+        var creditsList = new ListView();
+        creditsList.marginTop = 25;
+        creditsList.allowInteraction = false;
+        creditsList.width = helpTabs.width - 16;
+
+        creditsList.dataSource.add( {text: "Nebula S. Nova                  Main Coder"} );
+        creditsList.dataSource.add( {text: "GENZU                           Coded The \"Help\" Window"} );
+        
+        creditsTab.addComponent(creditsList);
+
+        var todoTab = new Box();
+        todoTab.text = 'To-Do';
+        helpTabs.addComponent(todoTab);
+
+        var todoLabel = new Label();
+        todoLabel.width = helpTabs.width;
+        var lines = [
+            "To-Do:", 
+            "",
+            "-- Additions --",
+            "",
+            "- Prop Animation Editor.",
+            "- Codename Engine Stage Converter.",
+            "- Chart/Stage testing in-editor.",
+            "- New Stage Button under \"File.\"", 
+            "- Editor preferences.", 
+            "- Character visiblity toggle.", 
+            "- Prop blend modes.", 
+            "",
+            "--   Fixes   --",
+            "",
+            "- Prop position being wrong when scaled with non-1 scroll factor.",
+            "- Song waveform being inaccurate."
+        ];
+        for (i in lines) {
+            todoLabel.text += i + "\n";
+            todoLabel.text = StringTools.replace(todoLabel.text, "null", "");
+        }
+        todoTab.addComponent(todoLabel);
+                    
+        helpWindow.addComponent(helpTabs);
+    }
+
     function fixPath(path) {
         var stringSplit = path.split("\\");
         while (stringSplit[0] != "mods") {
@@ -240,14 +376,49 @@ class StageEditor extends MusicBeatState {
     
     function writeStageFile(path, jsonFile) {
         var generatedBy = "Nova Stage Editor " + editorVersion;
-        jsonFile.version = generatedBy;
+        jsonFile.directory = "Stage Generated By: " + generatedBy;
         var fileString = Json.stringify(jsonFile, null, "\t");
         FileUtil.writeStringToPath(path, fileString);
         //if (checkFileExists(path)) {
         FileUtil.deleteFile(path);
         //}
         FileUtil.writeStringToPath(path, fileString);
+
         //windowTitleSuffix = StringTools.replace(windowTitleSuffix, " *", "");
+    }
+    
+    function saveStage() {
+        if (!StringTools.contains(curStageData.path, "assets")) {
+            writeStageFile(curStageData.path + "/data/stages/" + curStageData.fileName, curStageData.stage);
+        }
+        var editWindow =  new Window();
+        editWindow.title = "Saved Stage!";
+        editWindow.maximizable = false;
+        editWindow.minimizable = false;
+        editWindow.collapsable = false;
+        editWindow.width = 300;
+        editWindow.height = 115;      
+        var label = new Label();
+        label.text = "Successfully saved stage \"" + curStageData.fileName + "\"";
+        editWindow.addComponent(label);
+        editWindow.screenCenter();
+        // curPropData
+            
+        var ok = new Button();
+        ok.text = "OK";
+        ok.marginTop = 3;
+        ok.marginLeft = stageWindow.width - 20;
+
+        editWindow.windowManager = windowManager;
+        editWindow.addComponent(ok);
+        add(editWindow);
+        ok.onClick = ()->{
+            windowManager.closeWindow(editWindow);
+        }
+
+        
+        
+        FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
     }
 
     function saveStageAs() {
@@ -558,7 +729,7 @@ class StageEditor extends MusicBeatState {
         saveItem.text = "Save";
         saveItem.shortcutText = "Ctrl + S";
         saveItem.onClick = ()->{
-            writeStageFile(curStageData.path + "/data/stages/" + curStageData.fileName, curStageData.stage);
+            saveStage();
         }
         fileMenu.addComponent(saveItem);
 
@@ -1439,91 +1610,12 @@ class StageEditor extends MusicBeatState {
         var help = new Menu();
         help.text = "Help";
 
-        var helpShortcuts = new MenuItem();
+        helpShortcuts = new MenuItem();
         helpShortcuts.text = 'User Guide';
         helpShortcuts.shortcutText = 'F1';
         helpShortcuts.onClick = ()->{
 
-            var helpWindow = new Window();
-            helpWindow.title = 'Help';
-            helpWindow.windowManager = windowManager;
-            helpWindow.y = 100;
-            helpWindow.x = 100;
-            helpWindow.width = 500;
-            helpWindow.height = 600;
-            helpWindow.screenCenter();
-            helpWindow.maximizable = false;
-            helpWindow.minimizable = false;
-            helpWindow.collapsable = false;
-            add(helpWindow);
-
-            var helpTabs = new TabView();
-            helpTabs.width = 465;
-            helpTabs.height = 525;
-
-            var helpTabBarGuide = new Box();
-            helpTabBarGuide.text = 'Guide';
-            helpTabs.addComponent(helpTabBarGuide);
-
-            var guideLabel = new Label();
-            guideLabel.width = helpTabs.width;
-            guideLabel.text = "So you decided you can't figure out anything... well that makes two of us!\n\n" + 
-            "Saldy not much is here at the moment so how about you take a look at the two other tabs to pass the time! You might learn a thing or two!" + 
-            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" + 
-            "to be changed.";
-            helpTabBarGuide.addComponent(guideLabel);
-
-            var helpTabBarShortcuts = new Box();
-            helpTabBarShortcuts.text = 'Keybind';
-            helpTabs.addComponent(helpTabBarShortcuts);
-
-            helpTabelView = new TableView();
-            helpTabelView.height = helpTabs.height - 45;
-            helpTabBarShortcuts.addComponent(helpTabelView);
-
-            var helpHeader = new Header();
-            helpTabelView.addComponent(helpHeader);
-
-            var actionColumn = new Column();
-            actionColumn.text = 'Action';
-            actionColumn.width = (helpTabs.width/2) - 9;
-            helpHeader.addComponent(actionColumn);
-            
-            var keybindColumn = new Column();
-            keybindColumn.text = 'Keybind';
-            keybindColumn.width = (helpTabs.width/2) - 9;
-            helpHeader.addComponent(keybindColumn);
-
-            var keybindText = new ListView();
-            keybindText.marginTop = 25;
-            keybindText.allowInteraction = false;
-            keybindText.width = helpTabs.width - 16;
-            
-            keybindText.dataSource.add( {text: "Show User Guide                 F1"} );
-            keybindText.dataSource.add( {text: "Open Stage                      Ctrl + O"} );
-            keybindText.dataSource.add( {text: "New State                       Ctrl + N"} );
-            keybindText.dataSource.add( {text: "Save                            Ctrl + S"} );
-            keybindText.dataSource.add( {text: "Save As                         Ctrl + Shift + S"} );
-            keybindText.dataSource.add( {text: "Reset Camera Position           Ctrl + R"} );
-            keybindText.dataSource.add( {text: "Reset Camera Zoom               Ctrl + Shift+ R"} );
-            keybindText.dataSource.add( {text: "Create/Add Prop                 Ctrl + A"} );
-            keybindText.dataSource.add( {text: "Deleted Selected Prop           Delete"} );
-            keybindText.dataSource.add( {text: "Exit                            Ctrl + Q"} );
-            helpTabBarShortcuts.addComponent(keybindText);
-
-            var helpTabExtra = new Box();
-            helpTabExtra.text = 'Change Log';
-            helpTabs.addComponent(helpTabExtra);
-
-            var changelogText = new Label();
-            changelogText.width = helpTabs.width;
-            changelogText.text = "Change Log:" +
-            "\nNova Stage Editor " + editorVersion +
-            "\n\n" + editorVersion + "\n" +
-            "Initial Release. Basic Editor Functionality";
-            helpTabExtra.addComponent(changelogText);
-                        
-            helpWindow.addComponent(helpTabs);
+            openUserGuide();
 
         }
         
@@ -1588,7 +1680,19 @@ class StageEditor extends MusicBeatState {
     
     function update(elapsed) {
         super.update(elapsed);
+
+        if (FlxG.keys.justPressed.F1) {
+            openUserGuide();
+        }
         
+        if (FlxG.keys.justPressed.S && FlxG.keys.pressed.CONTROL) {
+            if (FlxG.keys.pressed.SHIFT) {
+                saveStageAs();
+            } else {
+                saveStage();
+            }
+
+        }
         if (FlxG.keys.justPressed.R && FlxG.keys.pressed.CONTROL) {
             cameraTarget.zoom = curStageData.stage.cameraZoom;
         }  
