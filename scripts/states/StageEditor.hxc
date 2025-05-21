@@ -1522,21 +1522,7 @@ class StageEditor extends MusicBeatState {
             "\n\n" + editorVersion + "\n" +
             "Initial Release. Basic Editor Functionality";
             helpTabExtra.addComponent(changelogText);
-
-            // var keybindKey = new ListView();
-            // keybindKey.width = (helpTabs.width)/2 - 6;
-            // keybindKey.marginTop = 25;
-            // keybindKey.marginLeft = 223;
-            
-            // keybindKey.dataSource.add( {text: "F1"} );
-            // keybindKey.dataSource.add( {text: "Ctrl + O"} );
-            // keybindKey.dataSource.add( {text: "Ctrl + N"} );
-            // keybindKey.dataSource.add( {text: "Ctrl + S"} );
-            // keybindKey.dataSource.add( {text: "Ctrl + Shift + S"} );
-            // keybindKey.dataSource.add( {text: "Ctrl A"} );
-            // keybindKey.dataSource.add( {text: "Delete"} );
-            // helpTabBarShortcuts.addComponent(keybindKey);
-            
+                        
             helpWindow.addComponent(helpTabs);
 
         }
