@@ -1691,11 +1691,17 @@ class StageEditor extends MusicBeatState {
             } else {
                 saveStage();
             }
-
         }
-        if (FlxG.keys.justPressed.R && FlxG.keys.pressed.CONTROL) {
-            cameraTarget.zoom = curStageData.stage.cameraZoom;
-        }  
+
+        if (FlxG.keys.pressed.CONTROL) {
+            if (FlxG.keys.justPressed.Q){
+                FlxG.switchState(new MainMenuState());
+            }
+            if (FlxG.keys.justPressed.R && FlxG.keys.pressed.SHIFT ) {
+                cameraTarget.zoom = curStageData.stage.cameraZoom;
+            }
+        }
+
 
         if (doCrash) {
             if (timer == 0) {
