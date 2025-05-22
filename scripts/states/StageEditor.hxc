@@ -125,6 +125,8 @@ class StageEditor extends MusicBeatState {
 
     var Converters;
 
+    var camStepper;
+
     var stageName;
 
     var camHUD;
@@ -571,6 +573,10 @@ class StageEditor extends MusicBeatState {
         opponent.y = stage.characters.dad.position[1]+(offsetY);
         opponent.x -= opponent.width/2;
         opponent.y -= opponent.height;
+
+        if (camStepper != null) {
+            camStepper.pos = stage.cameraZoom;
+        }
         //remove(opponent);
         //insert(stage.characters.dad.zIndex, opponent);
         //stage.characters.bf.position;
@@ -861,7 +867,7 @@ class StageEditor extends MusicBeatState {
 
                 stageWindow.addComponent(stageNameBox);
 
-                var camStepper = new NumberStepper();
+                camStepper = new NumberStepper();
                 camStepper.step = 0.1;
                 camStepper.pos = curStageData.stage.cameraZoom != null ? curStageData.stage.cameraZoom : 1;
                 camStepper.width = 70;
