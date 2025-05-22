@@ -135,7 +135,7 @@ class StageEditor extends MusicBeatState {
     var currentFolder = "??";
     var currentTrack = "Artistic Expression";
 
-    var editorVersion = "v0.1.0";
+    var editorVersion = "v0.1.1";
 
     var windowTitleSuffix = "";
     var windowTitlePrefix = "";
@@ -310,7 +310,10 @@ class StageEditor extends MusicBeatState {
         changelogText.width = helpTabs.width;
         changelogText.text = "Nova Stage Editor " + editorVersion +
         "\nChange Log:" +
-        "\n\n" + editorVersion + "\n" +
+        "\n\nv0.1.1\n" +
+        "Made Ctrl + Q Function\n" +
+        "Fixed Default Cam Zoom Not Updated On Stage Switch" +
+        "\n\nv0.1.0\n" +
         "Initial Release. Basic Editor Functionality";
         helpTabExtra.addComponent(changelogText);
 
