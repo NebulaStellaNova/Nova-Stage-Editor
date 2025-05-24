@@ -64,6 +64,7 @@ import haxe.ui.components.NumberStepper;
 import haxe.ui.containers.dialogs.Dialog;
 import haxe.ui.containers.Box;
 import haxe.ui.containers.HBox;
+import haxe.ui.containers.VBox;
 import haxe.ui.containers.Header;
 import haxe.ui.containers.TabView;
 import haxe.ui.containers.ListView;
@@ -82,23 +83,14 @@ import haxe.ui.data.ArrayDataSource;
 import haxe.ui.macros.ComponentMacros;
 
 import openfl.events.UncaughtErrorEvent;
+import openfl.net.URLLoader;
+import openfl.net.URLRequest;
 
 class StageEditor extends MusicBeatState {
     var doCrash = false;
 
     // -- Shaders -- \\
     var brightenShader = new ScriptedFlxRuntimeShader("
-        #pragma header
-
-        uniform float offset;
-
-        void main() {
-            gl_FragColor = flixel_texture2D(bitmap, openfl_TextureCoordv);
-            gl_FragColor.rgb += offset * gl_FragColor.a;
-        }
-    ");
-
-    var brightenShader2 /* For Flashing UI Elements */ = new ScriptedFlxRuntimeShader("
         #pragma header
 
         uniform float offset;
@@ -135,7 +127,31 @@ class StageEditor extends MusicBeatState {
     var currentFolder = "??";
     var currentTrack = "Artistic Expression";
 
-    var editorVersion = "v0.1.1";
+    var editorVersion = "v0.1.2";
+    var changelog = [
+            {
+                version: "v0.1.2",
+                changes: [
+                    "Added \"New\" Button Under \"Files\"",
+                    "Added \"Discord\" Tab to Help Window",
+                    "Added Update Checker When You Open The Editor",
+                    "Added \"Check For Updates\" Button Under \"Help\""
+                ]
+            },
+            {
+                version: "v0.1.1",
+                changes: [
+                    "Made Ctrl + Q Function",
+                    "Fixed Default Cam Zoom Not Updated on Stage Switch"
+                ]
+            },
+            {
+                version: "v0.1.0",
+                changes: [
+                    "Initial Release, Basic Editor Functionality"
+                ]
+            }
+        ];
 
     var windowTitleSuffix = "";
     var windowTitlePrefix = "";
@@ -174,6 +190,91 @@ class StageEditor extends MusicBeatState {
 
     var offsetX = FlxG.width/4;
     var offsetY = FlxG.height/4;
+
+    var didFirstCheck = false;
+
+    function checkForUpdates() {
+        var loader = new URLLoader();
+        loader.addEventListener("complete", ()->{
+            if (loader.data != editorVersion) {
+                trace("New Stage Editor Update Found!!");
+
+                var updateWindow = new Window();
+                updateWindow.title = "New Update Found!!";
+                updateWindow.maximizable = false;
+                updateWindow.minimizable = false;
+                updateWindow.collapsable = false;
+                updateWindow.windowManager = windowManager;
+                updateWindow.width = 300;
+                updateWindow.height = 160;
+                
+
+                var nameLabel = new Label();
+                nameLabel.text = "New Version: " + loader.data + "\nCurrent Version: " + editorVersion;
+                nameLabel.marginTop = 6;
+                updateWindow.addComponent(nameLabel);
+
+                var updateButton = new Button();
+                updateButton.text = "Open GameBanana";
+                updateButton.marginTop = 5;
+                updateButton.onClick = ()->{
+                    FlxG.openURL("https://gamebanana.com/tools/19825");
+                }
+                updateWindow.addComponent(updateButton);
+
+                var closeButton = new Button();
+                closeButton.text = "Close";
+                closeButton.marginTop = 3;
+                closeButton.marginLeft = updateWindow.width - 90;
+                updateWindow.addComponent(closeButton);
+
+                updateWindow.screenCenter();
+                add(updateWindow);
+                FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+
+                closeButton.onClick = ()->{
+                    windowManager.closeWindow(updateWindow);
+                }
+            } else if (didFirstCheck) {
+                var updateWindow = new Window();
+                updateWindow.title = "No Update Found.";
+                updateWindow.maximizable = false;
+                updateWindow.minimizable = false;
+                updateWindow.collapsable = false;
+                updateWindow.windowManager = windowManager;
+                updateWindow.width = 300;
+                updateWindow.height = 118;
+
+                var nameLabel = new Label();
+                nameLabel.text = "Your Editor is Up To Date!";
+                nameLabel.marginTop = 6;
+                updateWindow.addComponent(nameLabel);
+
+                var closeButton = new Button();
+                closeButton.text = "Close";
+                closeButton.marginTop = 3;
+                closeButton.marginLeft = updateWindow.width - 90;
+                updateWindow.addComponent(closeButton);
+
+                updateWindow.screenCenter();
+                add(updateWindow);
+                FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+
+                closeButton.onClick = ()->{
+                    windowManager.closeWindow(updateWindow);
+                }
+            }
+            didFirstCheck = true;
+            //var bitmap:BitmapData = BitmapData.fromBytes(loader.data);
+            //var sprite:FunkinSprite = new FunkinSprite(10, 10).loadBitmapData(bitmap);
+            //add(sprite);
+            //trace(loader.data);
+            //FileUtil.writeBytesToPath(".temp/test.png", loader.data);
+        });
+        //var reference = new FileReference();
+        var url = "https://raw.githubusercontent.com/NebulaStellaNova/Nova-Stage-Editor/refs/heads/main/version.txt"; 
+        loader.load(new URLRequest(url));
+    }
     
     function createClickCircle() {
         return;
@@ -292,7 +393,7 @@ class StageEditor extends MusicBeatState {
         
         keybindText.dataSource.add( {text: "Show User Guide                 F1"} );
         //keybindText.dataSource.add( {text: "Open Stage                      Ctrl + O"} );
-        //keybindText.dataSource.add( {text: "New State                       Ctrl + N"} );
+        keybindText.dataSource.add( {text: "New State                       Ctrl + N"} );
         keybindText.dataSource.add( {text: "Save                            Ctrl + S"} );
         keybindText.dataSource.add( {text: "Save As                         Ctrl + Shift + S"} );
         //keybindText.dataSource.add( {text: "Reset Camera Position           Ctrl + R"} );
@@ -309,12 +410,13 @@ class StageEditor extends MusicBeatState {
         var changelogText = new Label();
         changelogText.width = helpTabs.width;
         changelogText.text = "Nova Stage Editor " + editorVersion +
-        "\nChange Log:" +
-        "\n\nv0.1.1\n" +
-        "Made Ctrl + Q Function\n" +
-        "Fixed Default Cam Zoom Not Updated On Stage Switch" +
-        "\n\nv0.1.0\n" +
-        "Initial Release. Basic Editor Functionality";
+        "\nChange Log:\n";
+        for (i in changelog) {
+            changelogText.text += "\n" + i.version + "\n";
+            for (change in i.changes) {
+                changelogText.text += change + "\n";
+            }
+        }
         helpTabExtra.addComponent(changelogText);
 
         var creditsTab = new Box();
@@ -347,10 +449,11 @@ class StageEditor extends MusicBeatState {
             "",
             "-- Additions --",
             "",
+            "✓ New Stage Button under \"File.\"", 
+            "✓ Editor Update Checker.", 
             "- Prop Animation Editor.",
             "- Codename Engine Stage Converter.",
             "- Chart/Stage testing in-editor.",
-            "- New Stage Button under \"File.\"", 
             "- Editor preferences.", 
             "- Character visiblity toggle.", 
             "- Prop blend modes.", 
@@ -365,6 +468,41 @@ class StageEditor extends MusicBeatState {
             todoLabel.text = StringTools.replace(todoLabel.text, "null", "");
         }
         todoTab.addComponent(todoLabel);
+
+        var discordTab = new VBox();
+        discordTab.text = 'Discord';
+        helpTabs.addComponent(discordTab);
+
+
+        var novaEditorServer = new Label();
+        novaEditorServer.text = "Nova Editor Server:\nhttps://discord.gg/MTMRYc63Dj";
+        discordTab.addComponent(novaEditorServer);
+
+        var launchNovaServer = new Button();
+        launchNovaServer.text = "Join Server"; 
+        launchNovaServer.allowInteraction = true;
+        launchNovaServer.onClick = ()->{
+            FlxG.openURL("https://discord.gg/MTMRYc63Dj");
+        }
+        //launchNovaServer.marginTop = 35;
+        discordTab.addComponent(launchNovaServer);
+
+        var vSliceNetworkServer = new Label();
+        vSliceNetworkServer.text = "\nV-Slice Network:\nhttps://discord.gg/6ja4A7qtJc";
+        discordTab.addComponent(vSliceNetworkServer);
+
+        var launchVSliceServer = new Button();
+        launchVSliceServer.text = "Join Server"; 
+        launchVSliceServer.allowInteraction = true;
+        launchVSliceServer.onClick = ()->{
+            FlxG.openURL("https://discord.gg/6ja4A7qtJc");
+        }
+        //launchNovaServer.marginTop = 35;
+        discordTab.addComponent(launchVSliceServer);
+
+        var thanksLabel = new Label();
+        thanksLabel.text = "\n\nHUGE Thanks To V-Slice Network for providing tips when I was \ncoding this.\n- Nebula S. Nova";
+        discordTab.addComponent(thanksLabel);
                     
         helpWindow.addComponent(helpTabs);
     }
@@ -421,8 +559,6 @@ class StageEditor extends MusicBeatState {
             windowManager.closeWindow(editWindow);
         }
 
-        
-        
         FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
     }
 
@@ -432,6 +568,18 @@ class StageEditor extends MusicBeatState {
             writeStageFile(fixPath(path), curStageData.stage);
             FlxG.switchState(ScriptedMusicBeatState.init('StageEditor'));
         }, null, curStageData.fileName);
+    }
+
+    var templateStage;
+
+    function newStageAs(name) {
+        templateStage = parseJsonFile(currentFolder + "/data/templateStage.json");
+        templateStage.name = name;
+        FileUtil.browseForSaveFile([FileUtil.FILE_FILTER_JSON], (path)->{
+            trace(fixPath(path));
+            writeStageFile(fixPath(path), templateStage);
+            FlxG.switchState(ScriptedMusicBeatState.init('StageEditor'));
+        }, null, name);
     }
 
     function reloadPropList() {
@@ -590,11 +738,12 @@ class StageEditor extends MusicBeatState {
         h = FlxG.height;
         w = FlxG.width;
         brightenShader.data.offset.value = [0.0];
-        brightenShader2.data.offset.value = [0.0];
     }
 
     function create() {
         super.create();
+
+        checkForUpdates();
         
 		save.bind("stage-editor", "NebulaStellaNova");
         if(save.data.editorSong == null) {
@@ -734,6 +883,71 @@ class StageEditor extends MusicBeatState {
         var fileMenu = new Menu();
         fileMenu.text = "File";
     
+        var newItem = new MenuItem();
+        newItem.text = "New";
+        newItem.shortcutText = "Ctrl + N";
+        newItem.onClick = ()->{
+
+            var newWindow = new Window();
+            newWindow.title = "Create Stage";
+            newWindow.maximizable = false;
+            newWindow.minimizable = false;
+            newWindow.collapsable = false;
+            newWindow.windowManager = windowManager;
+            newWindow.width = 300;
+            newWindow.height = 130;
+
+            var stageData = {
+                name: ""
+            }
+            
+            var name = new TextField();
+            name.placeholder = "New Stage";
+            name.color = 0xFFaaaaaa;
+            name.onChange = ()->{
+                stageData.name = name.text;
+                name.color = 0xFFaaaaaa;
+            }
+                
+            var nameBox = new HBox();
+
+            var nameLabel = new Label();
+            nameLabel.text = "Name:";
+            nameLabel.marginTop = 6;
+            nameBox.addComponent(nameLabel);
+            
+            nameBox.addComponent(name);
+            
+            newWindow.addComponent(nameBox);
+            
+            var confirmButton = new Button();
+            confirmButton.text = "Confirm";
+            confirmButton.marginTop = 3;
+            confirmButton.marginLeft = newWindow.width - 105;
+            newWindow.addComponent(confirmButton);
+
+            newWindow.screenCenter();
+            add(newWindow);
+            FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+
+            confirmButton.onClick = ()->{
+                trace(name.text);
+                if (name.text != "" && name.text != null) {
+                    newStageAs(name.text);
+                    windowManager.closeWindow(newWindow);
+                } else {
+                    if (name.text == "" || name.text == null) {
+                        name.color = 0xFFFF0000;
+                    }
+                }
+            }
+            // saveStage();
+        }
+        fileMenu.addComponent(newItem);
+
+        var separator = new MenuSeparator();
+        fileMenu.addComponent(separator);
+
         var saveItem = new MenuItem();
         saveItem.text = "Save";
         saveItem.shortcutText = "Ctrl + S";
@@ -755,6 +969,7 @@ class StageEditor extends MusicBeatState {
 
         var exitToMenuItem = new MenuItem();
         exitToMenuItem.text = "Exit To Menu";
+        exitToMenuItem.shortcutText = "Ctrl + Q";
         exitToMenuItem.onClick = ()->{
             if (!unsavedChanges) {
                 FlxG.switchState(new MainMenuState());
@@ -1627,8 +1842,16 @@ class StageEditor extends MusicBeatState {
             openUserGuide();
 
         }
-        
         help.addComponent(helpShortcuts);
+
+        checkForUpdatesButton = new MenuItem();
+        checkForUpdatesButton.text = 'Check for Updates';
+        //helpShortcuts.shortcutText = 'F1';
+        checkForUpdatesButton.onClick = ()->{
+            checkForUpdates();
+        }
+        help.addComponent(checkForUpdatesButton);
+
         topBar.addComponent(help);
 
 
@@ -1735,7 +1958,6 @@ class StageEditor extends MusicBeatState {
         
 
         brightenShader.data.offset.value[0] = MathUtil.coolLerp(brightenShader.data.offset.value[0], 0, 0.05);
-        brightenShader2.data.offset.value[0] = MathUtil.coolLerp(brightenShader2.data.offset.value[0], 0, 0.05);
 
         curPropData = null;
         var propIndex = 0;

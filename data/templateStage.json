@@ -1,0 +1,23 @@
+{
+  "props": [],
+  "cameraZoom": 1.0,
+  "version": "1.0.0",
+  "characters": {
+    "bf": {
+      "zIndex": 100,
+      "position": [989.5, 885],
+      "cameraOffsets": [0, 0]
+    },
+    "dad": {
+      "zIndex": 101,
+      "position": [335, 885],
+      "cameraOffsets": [0, 0]
+    },
+    "gf": {
+      "zIndex": 102,
+      "cameraOffsets": [0, 0],
+      "position": [751.5, 787]
+    }
+  },
+  "name": "Main Stage"
+}
