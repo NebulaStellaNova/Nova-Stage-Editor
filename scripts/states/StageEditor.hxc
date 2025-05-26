@@ -2099,7 +2099,7 @@ class StageEditor extends MusicBeatState {
 
 	function update(elapsed) {
 		super.update(elapsed);
-		if (frame < 2) {
+		if (frame < 10) {
 			frame++;
 			return;
 		}
