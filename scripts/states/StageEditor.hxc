@@ -233,6 +233,8 @@ class StageEditor extends MusicBeatState {
 
 	var debugTexts = [];
 
+	var cancelUpdate = false;
+
 	function debugPrint(text) {
 		var text = new FlxText(0, 50, FlxG.width, text);
 		text.visible = false;
@@ -281,6 +283,7 @@ class StageEditor extends MusicBeatState {
 			debugPrint("Reloading The Editor");
 			new FlxTimer().start(0.1, ()->{
 				PolymodHandler.forceReloadAssets();
+				cancelUpdate = true;
 				var targetState = ScriptedMusicBeatState.init("StageEditor");
 				FlxG.switchState(targetState);
 				FlxTransitionableState.skipNextTransIn = true;
@@ -2101,6 +2104,8 @@ class StageEditor extends MusicBeatState {
 	function update(elapsed) {
 		super.update(elapsed);
 
+		if (cancelUpdate) { return; }
+
 		var debugIndex = 0;
 		var offset = 0;
 		for (i in debugTexts) {
@@ -2188,7 +2193,6 @@ class StageEditor extends MusicBeatState {
 		}
 
 		var disableInput = false;
-		trace(members);
 		if (members != null) {
 			for (member in members) {
 				
