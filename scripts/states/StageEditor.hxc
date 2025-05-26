@@ -16,6 +16,7 @@ import flixel.FlxG;
 import flixel.FlxCamera;
 import flixel.FlxSprite;
 import flixel.FlxObject;
+import flixel.FlxTimer;
 
 import flixel.text.FlxTextBorderStyle;
 
@@ -102,6 +103,8 @@ import haxe.ui.macros.ComponentMacros;
 import openfl.events.UncaughtErrorEvent;
 import openfl.net.URLLoader;
 import openfl.net.URLRequest;
+
+import funkin.modding.PolymodHandler;
 
 class StageEditor extends MusicBeatState {
 	var doCrash = false;
@@ -240,14 +243,28 @@ class StageEditor extends MusicBeatState {
 		add(text);
 	}
 
+	function deleteDirectory(path) {
+		var subObjects = FileUtil.readDir(path);
+		for (i in subObjects) {
+			if (!StringTools.contains(i, ".")) {
+				deleteDirectory(path + "/" + i);
+			} else {
+				FileUtil.deleteFile(path + "/" + i);
+			}
+		}
+		FileUtil.deleteDir(path);
+	}
+
 	function downloadLatestVersion() {
+		trace(currentFolder);
 		var loader = new URLLoader();
 		debugPrint("Downloading Latest Version...");
         loader.dataFormat = 0;
 		loader.addEventListener("complete", ()->{
 			debugPrint("Latest Version Downloaded!");
 			debugPrint("Extracting ZIP File...");
-			FileUtil.deleteDir(currentFolder);
+			deleteDirectory(currentFolder);
+			//FileUtil.deleteDir(currentFolder);
 			var bytesInput = new BytesInput(loader.data);
 			var reader = new Reader(bytesInput);
 			var entries = reader.read();
@@ -255,10 +272,13 @@ class StageEditor extends MusicBeatState {
 				var data = Reader.unzip(_entry);
 				if (data + "" != "") {
 					var fileName = StringTools.replace(_entry.fileName, "Nova-Stage-Editor-main/", "");
-					FileUtil.writeBytesToPath(currentFolder+fileName, data);
+					FileUtil.writeBytesToPath(currentFolder+ "/" + fileName, data);
 				}
 			}
-			debugPrint("Finished Extracting ZIP File, Press F5 To Reload The Editor");
+			debugPrint("Reloading The Editor");
+			new FlxTimer().start(0.1, ()->{
+				PolymodHandler.forceReloadAssets();
+			});
 		});
 		var url = "https://codeload.github.com/NebulaStellaNova/Nova-Stage-Editor/zip/refs/heads/main";
 		loader.load(new URLRequest(url));
