@@ -158,13 +158,15 @@ class StageEditor extends MusicBeatState {
 					"\n-- Aditions --",
 					"Added Editor Controls To Help Menu",
 					"Added Volume Slider To \"Song Data\" Window",
+					"Added The Ability To Update The Editor From Within Game",
+					"Added \"Re-Download Editor\" Under \"Help\"",
 					"Added View From Character Under \"View\" (May Be Inaccurate)",
 					"\n-- Removals --",
 					"Removed Check Boxes Under \"Windows\"",
 					"\n-- Fixes --",
 					"Fixed Error When Re-Opening Stage Data Window"
 					"\n-- Tweaks --",
-					"Made Version Checker Us Polymod Meta JSON",
+					"Made Version Checker Use Polymod Meta JSON",
 				]
 			},
 			{
@@ -280,7 +282,7 @@ class StageEditor extends MusicBeatState {
 					FileUtil.writeBytesToPath(currentFolder+ "/" + fileName, data);
 				}
 			}
-			debugPrint("Reloading The Editor");
+			debugPrint("Reloading Mods...");
 			new FlxTimer().start(0.1, ()->{
 				//cancelUpdate = true;
 				PolymodHandler.forceReloadAssets();
@@ -289,7 +291,7 @@ class StageEditor extends MusicBeatState {
 				//FlxTransitionableState.skipNextTransIn = true;
 				//FlxTransitionableState.skipNextTransOut = true;
 				//targetState.scriptCall("debugPrint", ["Editor Reloaded!"]);
-				debugPrint("If you can see this re-open the editor");
+				debugPrint("Re-Open Editor To Apply Update");
 			});
 		});
 		var url = "https://codeload.github.com/NebulaStellaNova/Nova-Stage-Editor/zip/refs/heads/main";
@@ -313,7 +315,7 @@ class StageEditor extends MusicBeatState {
 				updateWindow.collapsable = false;
 				updateWindow.windowManager = windowManager;
 				updateWindow.width = 300;
-				updateWindow.height = 160;
+				updateWindow.height = 192;
 				
 
 				var nameLabel = new Label();
@@ -530,7 +532,7 @@ class StageEditor extends MusicBeatState {
 
 		var helpTabExtra = new ScrollView();
 		helpTabExtra.text = 'Change Log';
-		helpTabExtra.contentWidth = helpTabs.width - 18;
+		helpTabExtra.contentWidth = helpTabs.width - 30;
 		helpTabExtra.isScrollableHorizontally = false;
 		helpTabExtra.width = helpTabs.width - 16;
 		helpTabExtra.height = helpTabs.height - 42;
@@ -2035,7 +2037,7 @@ class StageEditor extends MusicBeatState {
 		help.addComponent(checkForUpdatesButton);
 
 		var redownloadButton = new MenuItem();
-		redownloadButton.text = 'Redownload Editor';
+		redownloadButton.text = 'Re-Download Editor';
 		//redownloadButton.shortcutText = 'F1';
 		redownloadButton.onClick = ()->{
 			downloadLatestVersion();
