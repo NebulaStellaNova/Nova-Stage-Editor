@@ -282,13 +282,13 @@ class StageEditor extends MusicBeatState {
 			}
 			debugPrint("Reloading The Editor");
 			new FlxTimer().start(0.1, ()->{
-				cancelUpdate = true;
+				//cancelUpdate = true;
 				PolymodHandler.forceReloadAssets();
-				var targetState = ScriptedMusicBeatState.init("StageEditor");
-				FlxG.switchState(targetState);
-				FlxTransitionableState.skipNextTransIn = true;
-				FlxTransitionableState.skipNextTransOut = true;
-				targetState.scriptCall("debugPrint", ["Editor Reloaded!"]);
+				//var targetState = ScriptedMusicBeatState.init("StageEditor");
+				//FlxG.switchState(targetState);
+				//FlxTransitionableState.skipNextTransIn = true;
+				//FlxTransitionableState.skipNextTransOut = true;
+				//targetState.scriptCall("debugPrint", ["Editor Reloaded!"]);
 				debugPrint("If you can see this re-open the editor");
 			});
 		});
