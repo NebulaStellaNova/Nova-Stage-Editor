@@ -2188,36 +2188,38 @@ class StageEditor extends MusicBeatState {
 		}
 
 		var disableInput = false;
-		for (member in members) {
-			
-			if (member != null && member.visible) {
-				// if (FlxG.mouse.pressed && member == windowManager.topMostWindow) {
-				//     var tophitbox = new FlxSprite();
-				//     tophitbox.width = member.width;
-				//     tophitbox.height = 44;
-				//     tophitbox.x = member.x + FlxG.mouse.deltaX - FlxG.camera.scroll.x;
-				//     tophitbox.y = member.y + FlxG.mouse.deltaY - FlxG.camera.scroll.y;
-				//     if (FlxG.mouse.overlaps(tophitbox) && FlxG.mouse.pressed) {
-				//         member.x += FlxG.mouse.deltaX;
-				//         member.y += FlxG.mouse.deltaY;
-				//     }
-				//     if (member.y < -3 && !FlxG.mouse.pressed) {
-				//         member.y = -3;
-				//     }
-					
-				// }
-				//if (FlxG.mouse.overlaps(member))
-				var typesToCancelInput = ["MenuBar", "Menu", "Window", "DropDown"];
-				var classArray = ReflectUtil.getClassNameOf(member).split(".");
-				var theClass = classArray[classArray.length-1];
-				if (theClass == "Box" || theClass == "Menu") {
-					member.cameras = [camDropDown];
-				}
-				if (theClass != null) {
-					if (FlxG.mouse.overlaps(member) && 
-						typesToCancelInput.contains(theClass)) {
-						//trace(theClass);
-						disableInput = true;
+		if (members != null) {
+			for (member in members) {
+				
+				if (member != null && member.visible) {
+					// if (FlxG.mouse.pressed && member == windowManager.topMostWindow) {
+					//     var tophitbox = new FlxSprite();
+					//     tophitbox.width = member.width;
+					//     tophitbox.height = 44;
+					//     tophitbox.x = member.x + FlxG.mouse.deltaX - FlxG.camera.scroll.x;
+					//     tophitbox.y = member.y + FlxG.mouse.deltaY - FlxG.camera.scroll.y;
+					//     if (FlxG.mouse.overlaps(tophitbox) && FlxG.mouse.pressed) {
+					//         member.x += FlxG.mouse.deltaX;
+					//         member.y += FlxG.mouse.deltaY;
+					//     }
+					//     if (member.y < -3 && !FlxG.mouse.pressed) {
+					//         member.y = -3;
+					//     }
+						
+					// }
+					//if (FlxG.mouse.overlaps(member))
+					var typesToCancelInput = ["MenuBar", "Menu", "Window", "DropDown"];
+					var classArray = ReflectUtil.getClassNameOf(member).split(".");
+					var theClass = classArray[classArray.length-1];
+					if (theClass == "Box" || theClass == "Menu") {
+						member.cameras = [camDropDown];
+					}
+					if (theClass != null) {
+						if (FlxG.mouse.overlaps(member) && 
+							typesToCancelInput.contains(theClass)) {
+							//trace(theClass);
+							disableInput = true;
+						}
 					}
 				}
 			}
