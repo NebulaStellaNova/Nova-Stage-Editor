@@ -2215,9 +2215,11 @@ class StageEditor extends MusicBeatState {
 				if (theClass == "Box" || theClass == "Menu") {
 					member.cameras = [camDropDown];
 				}
-				if (FlxG.mouse.overlaps(member) && typesToCancelInput.contains(theClass)) {
-					//trace(theClass);
-					disableInput = true;
+				if (theClass != null) {
+					if (FlxG.mouse.overlaps(member) && typesToCancelInput.contains(theClass)) {
+						//trace(theClass);
+						disableInput = true;
+					}
 				}
 			}
 		}
