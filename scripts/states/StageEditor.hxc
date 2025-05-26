@@ -788,6 +788,7 @@ class StageEditor extends MusicBeatState {
 		curStageData = stageData;
 		var stage = stageData.stage;
 		cameraTarget.zoom = stage.cameraZoom;
+		windowTitleSuffix = " - Editing Stage: " + stage.name;
 		trace("Stage to load: " + stage.name);
 
 		if (stageName != null) {
@@ -884,7 +885,7 @@ class StageEditor extends MusicBeatState {
 			}
 		}
 
-		waveform = new WaveformSprite(FlxG.sound.music.waveformData, WaveformOrientation.HORIZONTAL, 0xFFFFFFFF, 1.25);
+		waveform = new WaveformSprite(FlxG.sound.music.get_waveformData(), WaveformOrientation.HORIZONTAL, 0xFFFFFFFF, 1.25);
 		waveform.forceUpdate = true;
 		waveform.x = -100;
 		waveform.y = -15;
@@ -1841,7 +1842,6 @@ class StageEditor extends MusicBeatState {
 					switch (songList.text) {
 						case "Artistic Expression":
 							FunkinSound.playMusic("chartEditorLoop", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
-							var daSound = FunkinSound.load(Paths.music("chartEditorLoop"));
 							FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
 							save.data.editorSong = {
 								title: "Artistic Expression",
@@ -2159,7 +2159,9 @@ class StageEditor extends MusicBeatState {
 			timer--;
 		}
 		if (waveform != null) {
+			waveform.set_waveformData(FlxG.sound.music.get_waveformData());
 			waveform.time = (FlxG.sound.music.time / 1000);
+			waveform.amplitude = 1.5 * FlxG.sound.music.volume;
 			waveform.cameras = [camHUD];
 			if (songWindow != null) {
 				waveform.visible = songWindow.visible;
