@@ -107,6 +107,8 @@ import openfl.net.URLRequest;
 
 import funkin.modding.PolymodHandler;
 
+import flixel.addons.transition.FlxTransitionableState;
+
 class StageEditor extends MusicBeatState {
 	var doCrash = false;
 
@@ -279,6 +281,11 @@ class StageEditor extends MusicBeatState {
 			debugPrint("Reloading The Editor");
 			new FlxTimer().start(0.1, ()->{
 				PolymodHandler.forceReloadAssets();
+				var targetState:NextState = ScriptedMusicBeatState.init(scriptedStateName);
+				FlxG.switchState(targetState);
+				FlxTransitionableState.skipNextTransIn = true;
+				FlxTransitionableState.skipNextTransOut = true;
+				targetState.debugPrint("Editor Reloaded!");
 			});
 		});
 		var url = "https://codeload.github.com/NebulaStellaNova/Nova-Stage-Editor/zip/refs/heads/main";
