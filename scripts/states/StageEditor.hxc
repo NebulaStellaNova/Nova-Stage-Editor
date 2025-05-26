@@ -2099,6 +2099,7 @@ class StageEditor extends MusicBeatState {
 	function update(elapsed) {
 		super.update(elapsed);
 		if (FlxG.state == null) { return; }
+		if (FlxG.mouse == null) { return; }
 
 		var debugIndex = 0;
 		var offset = 0;
