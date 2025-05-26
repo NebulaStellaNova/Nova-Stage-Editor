@@ -318,6 +318,14 @@ class StageEditor extends MusicBeatState {
 				}
 				updateWindow.addComponent(updateButton);
 
+				var downloadButton = new Button();
+				downloadButton.text = "Download/Install Update";
+				downloadButton.marginTop = 5;
+				downloadButton.onClick = ()->{
+					downloadLatestVersion();
+				}
+				updateWindow.addComponent(downloadButton);
+
 				var closeButton = new Button();
 				closeButton.text = "Close";
 				closeButton.marginTop = 3;
@@ -2007,13 +2015,21 @@ class StageEditor extends MusicBeatState {
 		}
 		help.addComponent(helpShortcuts);
 
-		checkForUpdatesButton = new MenuItem();
+		var checkForUpdatesButton = new MenuItem();
 		checkForUpdatesButton.text = 'Check for Updates';
 		//helpShortcuts.shortcutText = 'F1';
 		checkForUpdatesButton.onClick = ()->{
 			checkForUpdates();
 		}
 		help.addComponent(checkForUpdatesButton);
+
+		var redownloadButton = new MenuItem();
+		redownloadButton.text = 'Redownload Editor';
+		//redownloadButton.shortcutText = 'F1';
+		redownloadButton.onClick = ()->{
+			downloadLatestVersion();
+		}
+		help.addComponent(redownloadButton);
 
 		topBar.addComponent(help);
 
