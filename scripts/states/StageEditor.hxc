@@ -246,19 +246,19 @@ class StageEditor extends MusicBeatState {
         loader.dataFormat = 0;
 		loader.addEventListener("complete", ()->{
 			debugPrint("Latest Version Downloaded!");
-			//FileUtil.writeBytesToPath(".temp/Nova Stage Editor.zip", loader.data);
 			debugPrint("Extracting ZIP File...");
-			//var undoneZip = new Uncompress().execute(FileUtil.readBytesFromPath(".temp/Nova Stage Editor.zip"), 50);
+			FileUtil.deleteDir(currentFolder);
 			var bytesInput = new BytesInput(loader.data);
 			var reader = new Reader(bytesInput);
 			var entries = reader.read();
 			for(_entry in entries) {
 				var data = Reader.unzip(_entry);
 				if (data + "" != "") {
-					var fileName = StringTools.replace(_entry.fileName, "Nova-Stage-Editor-main/", "Nova Stage Editor/");
-					FileUtil.writeBytesToPath(".temp/"+fileName, data);
+					var fileName = StringTools.replace(_entry.fileName, "Nova-Stage-Editor-main/", "");
+					FileUtil.writeBytesToPath(currentFolder+fileName, data);
 				}
 			}
+			debugPrint("Finished Extracting ZIP File, Press F5 To Reload The Editor");
 		});
 		var url = "https://codeload.github.com/NebulaStellaNova/Nova-Stage-Editor/zip/refs/heads/main";
 		loader.load(new URLRequest(url));
