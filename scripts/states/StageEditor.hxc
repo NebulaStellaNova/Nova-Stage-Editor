@@ -16,7 +16,8 @@ import flixel.FlxG;
 import flixel.FlxCamera;
 import flixel.FlxSprite;
 import flixel.FlxObject;
-import flixel.FlxTimer;
+
+import flixel.util.FlxTimer;
 
 import flixel.text.FlxTextBorderStyle;
 
