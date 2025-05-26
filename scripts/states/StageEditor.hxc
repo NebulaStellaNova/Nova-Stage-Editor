@@ -281,7 +281,8 @@ class StageEditor extends MusicBeatState {
 			debugPrint("Reloading The Editor");
 			new FlxTimer().start(0.1, ()->{
 				PolymodHandler.forceReloadAssets();
-				FlxG.switchState(ScriptedMusicBeatState.init("StageEditor"));
+				var targetState = ScriptedMusicBeatState.init("StageEditor");
+				FlxG.switchState();
 				FlxTransitionableState.skipNextTransIn = true;
 				FlxTransitionableState.skipNextTransOut = true;
 				targetState.scriptCall("debugPrint", ["Editor Reloaded!"]);
