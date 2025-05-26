@@ -401,6 +401,11 @@ class StageEditor extends MusicBeatState {
         //keybindText.dataSource.add( {text: "Create/Add Prop                 Ctrl + A"} );
         keybindText.dataSource.add( {text: "Deleted Selected Prop           Delete"} );
         keybindText.dataSource.add( {text: "Exit                            Ctrl + Q"} );
+        keybindText.dataSource.add( {text: "                    -- Editor Controls --"} );
+        keybindText.dataSource.add( {text: "Mova Camera                     W, A, S, D"} );
+        keybindText.dataSource.add( {text: "Zoom Camera                     Q, E"} );
+        keybindText.dataSource.add( {text: "Move Prop/Character             Left Click + Drag"} );
+        keybindText.dataSource.add( {text: "Scale Prop                      Mouse Wheel"} );
         helpTabBarShortcuts.addComponent(keybindText);
 
         var helpTabExtra = new Box();
@@ -433,7 +438,7 @@ class StageEditor extends MusicBeatState {
         creditsList.allowInteraction = false;
         creditsList.width = helpTabs.width - 16;
 
-        creditsList.dataSource.add( {text: "Nebula S. Nova                  Main Coder"} );
+        creditsList.dataSource.add( {text: "Nebula S. Nova                  Main Coder, Lofi Freaky Menu"} );
         creditsList.dataSource.add( {text: "GENZU                           Coded The \"Help\" Window"} );
         
         creditsTab.addComponent(creditsList);
@@ -1692,6 +1697,7 @@ class StageEditor extends MusicBeatState {
                 songList.searchable = true;
                 songList.width = 215;
                 songList.dataSource.add({text: "Artistic Expression"});
+                songList.dataSource.add({text: "Freaky Menu (Lofi Mix)"});
                 songList.dataSource.add({text: "Freeplay Random"});
                 songList.dataSource.add({text: "Breakfast"});
                 songList.dataSource.add({text: "Breakfast (Pico)"});
@@ -1712,6 +1718,13 @@ class StageEditor extends MusicBeatState {
                             save.data.editorSong = {
                                 title: "Artistic Expression",
                                 key: "chartEditorLoop"
+                            }
+                        case "Freaky Menu (Lofi Mix)":
+                            FunkinSound.playMusic("freakyMenuLofi", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+                            FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+                            save.data.editorSong = {
+                                title: "Freaky Menu (Lofi Mix)",
+                                key: "freakyMenuLofi"
                             }
                         case "Breakfast":
                             FunkinSound.playMusic("breakfast", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
@@ -1917,6 +1930,11 @@ class StageEditor extends MusicBeatState {
             openUserGuide();
         }
         
+        if (FlxG.keys.pressed.DELETE){
+            curStageData.stage.props.remove(curPropData);
+            reloadPropList();
+        }
+        
         if (FlxG.keys.justPressed.S && FlxG.keys.pressed.CONTROL) {
             if (FlxG.keys.pressed.SHIFT) {
                 saveStageAs();
@@ -1932,11 +1950,6 @@ class StageEditor extends MusicBeatState {
             if (FlxG.keys.justPressed.R && FlxG.keys.pressed.SHIFT ) {
                 cameraTarget.zoom = curStageData.stage.cameraZoom;
             }
-        }
-
-        if (FlxG.keys.pressed.DELETE){
-            curStageData.stage.props.remove(curPropData);
-            reloadPropList();
         }
 
 
