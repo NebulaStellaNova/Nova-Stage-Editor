@@ -399,7 +399,7 @@ class StageEditor extends MusicBeatState {
         //keybindText.dataSource.add( {text: "Reset Camera Position           Ctrl + R"} );
         keybindText.dataSource.add( {text: "Reset Camera Zoom               Ctrl + Shift + R"} );
         //keybindText.dataSource.add( {text: "Create/Add Prop                 Ctrl + A"} );
-        //keybindText.dataSource.add( {text: "Deleted Selected Prop           Delete"} );
+        keybindText.dataSource.add( {text: "Deleted Selected Prop           Delete"} );
         keybindText.dataSource.add( {text: "Exit                            Ctrl + Q"} );
         helpTabBarShortcuts.addComponent(keybindText);
 
@@ -1932,6 +1932,11 @@ class StageEditor extends MusicBeatState {
             if (FlxG.keys.justPressed.R && FlxG.keys.pressed.SHIFT ) {
                 cameraTarget.zoom = curStageData.stage.cameraZoom;
             }
+        }
+
+        if (FlxG.keys.pressed.DELETE){
+            curStageData.stage.props.remove(curPropData);
+            reloadPropList();
         }
 
 
