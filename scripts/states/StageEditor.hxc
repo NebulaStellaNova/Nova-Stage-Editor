@@ -282,8 +282,8 @@ class StageEditor extends MusicBeatState {
 			}
 			debugPrint("Reloading The Editor");
 			new FlxTimer().start(0.1, ()->{
-				PolymodHandler.forceReloadAssets();
 				cancelUpdate = true;
+				PolymodHandler.forceReloadAssets();
 				var targetState = ScriptedMusicBeatState.init("StageEditor");
 				FlxG.switchState(targetState);
 				FlxTransitionableState.skipNextTransIn = true;
@@ -2104,7 +2104,7 @@ class StageEditor extends MusicBeatState {
 	function update(elapsed) {
 		super.update(elapsed);
 
-		if (cancelUpdate) { return; }
+		if (cancelUpdate) { return;}
 
 		var debugIndex = 0;
 		var offset = 0;
