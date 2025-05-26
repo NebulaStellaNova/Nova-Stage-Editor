@@ -7,7 +7,7 @@
       "name": "Nebula S. Nova",
       "icon": "nebula",
       "color": "#9500ff",
-      "roles": "Coder (Like alot of it s)",
+      "roles": "Coder (Like alot of it)",
       "url": "https://www.youtube.com/@ChinosModded"
     },
 	  {
@@ -19,6 +19,6 @@
     }
   ],
   "api_version": "0.6.4",
-  "mod_version": "1.0.0",
+  "mod_version": "0.1.3",
   "license": "Apache 2.0"
 }
