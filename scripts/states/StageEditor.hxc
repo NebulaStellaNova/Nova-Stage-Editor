@@ -286,6 +286,7 @@ class StageEditor extends MusicBeatState {
 				FlxTransitionableState.skipNextTransIn = true;
 				FlxTransitionableState.skipNextTransOut = true;
 				targetState.scriptCall("debugPrint", ["Editor Reloaded!"]);
+				debugPrint("If you can see this re-open the editor");
 			});
 		});
 		var url = "https://codeload.github.com/NebulaStellaNova/Nova-Stage-Editor/zip/refs/heads/main";
