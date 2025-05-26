@@ -2117,10 +2117,6 @@ class StageEditor extends MusicBeatState {
 		if (FlxG.keys.justPressed.F1) {
 			openUserGuide();
 		}
-
-		if (FlxG.keys.justPressed.F8) {
-			downloadLatestVersion();
-		}
 		
 		if (FlxG.keys.pressed.DELETE){
 			curStageData.stage.props.remove(curPropData);
