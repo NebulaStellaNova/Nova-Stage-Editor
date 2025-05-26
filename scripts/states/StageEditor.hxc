@@ -2188,6 +2188,7 @@ class StageEditor extends MusicBeatState {
 		}
 
 		var disableInput = false;
+		trace(members);
 		if (members != null) {
 			for (member in members) {
 				
