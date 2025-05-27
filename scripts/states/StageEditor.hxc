@@ -1105,6 +1105,7 @@ class StageEditor extends MusicBeatState {
 		exitToMenuItem.onClick = ()->{
 			if (!unsavedChanges) {
 				FlxG.switchState(new MainMenuState());
+				PolymodHandler.forceReloadAssets();
 			} 
 		}
 		fileMenu.addComponent(exitToMenuItem);
