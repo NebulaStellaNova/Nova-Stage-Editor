@@ -524,7 +524,7 @@ class StageEditor extends MusicBeatState {
 		keybindText.dataSource.add( {text: "Deleted Selected Prop           Delete"} );
 		keybindText.dataSource.add( {text: "Exit                            Ctrl + Q"} );
 		keybindText.dataSource.add( {text: "                    -- Editor Controls --"} );
-		keybindText.dataSource.add( {text: "Mova Camera                     W, A, S, D"} );
+		keybindText.dataSource.add( {text: "Move Camera                     W, A, S, D"} );
 		keybindText.dataSource.add( {text: "Zoom Camera                     Q, E"} );
 		keybindText.dataSource.add( {text: "Scale Selected Prop             Mouse Wheel"} );
 		keybindText.dataSource.add( {text: "Move Selected Prop/Character    Left Click + Drag"} ); 
@@ -877,7 +877,7 @@ class StageEditor extends MusicBeatState {
 
 		checkForUpdates();
 		
-		save.bind("stage-editor", "NebulaStellaNova");
+		save.bind("nova-editors", "NebulaStellaNova");
 		if(save.data.editorSong == null) {
 			save.data.editorSong = {
 				title: "Artistic Expression",
