@@ -213,7 +213,6 @@ class StageEditor extends MusicBeatState {
 
 	var currentlyAddedProps = [];
 
-
 	var cameraTarget = {
 		x: 0,
 		y: 0,
@@ -422,6 +421,26 @@ class StageEditor extends MusicBeatState {
 	/*function getPath(file:String) {
 		return paths + file;
 	}*/
+
+	public function parseJsoncString(str:String) {
+		var split = str.split('');
+		var string = "";
+		var isComment = false;
+		var i = 0;
+		for (char in split) {
+			if (char == "/" && split[i+1] == "/") {
+				isComment = true;
+			}
+			if (!isComment) {
+				string += char;
+			} else if (char == "\n") {
+				isComment = false;
+				string += char;
+			}
+			i++;
+		}
+		return Json.parse(string);
+	}
 
 	/**
 	 * Shortcut to parse a JSON string
@@ -875,6 +894,7 @@ class StageEditor extends MusicBeatState {
 	function create() {
 		super.create();
 
+
 		checkForUpdates();
 		
 		save.bind("nova-editors", "NebulaStellaNova");
@@ -921,6 +941,9 @@ class StageEditor extends MusicBeatState {
 				break;
 			}
 		}
+
+		
+		parseJsoncString(FileUtil.readStringFromPath(currentFolder + "/data/stages/stage.nStage"));
 
 		Converters = ModuleHandler.getModule("NovaConverters");
 

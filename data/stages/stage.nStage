@@ -1,0 +1,61 @@
+{
+    "global": {
+        "shader": "shaderName"
+    },
+    "scripts": [
+        "scriptExample", // Sub folders must be added, .hxc is auto added
+        "scripts/stages/customScript"
+    ],
+    "props": [
+        {
+            "id": "test",
+            "blendMode": 0, // Or "ADD"
+            "shader": "shaderName", // The .frag file OR built in shader
+            "velocity": {
+                "x": {
+                    "loopStart": -300,
+                    "loopEnd": 300,
+                    "amount": 10
+                },
+                "y": {
+                    "loopStart": -300,
+                    "loopEnd": 300,
+                    "amount": 10
+                }
+            },
+            "tweens": [
+                {
+                    "step": 10, // what step it should tween
+                    "duration": 4, // Seconds
+                    "type": "every",
+                    "ease": "quadOut",
+                    "looped": false,
+                    "data": {
+                        "x": -100,
+                        "y": null, // Null is ignored
+                        "alpha": 0.1
+                    }
+                },
+                {
+                    "beat": 40, // what beat it should tween
+                    "type": "once",
+                    "looped": true,
+                    "loopData": {
+                        "in": {
+                            "duration": 1,
+                            "ease": "quadInOut"
+                        },
+                        "out": {
+                            "duration": 1,
+                            "ease": "quadInOut",
+                            "data": {
+                                "x": -100,
+                                "y": null
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
