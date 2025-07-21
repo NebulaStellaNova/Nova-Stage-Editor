@@ -150,21 +150,28 @@ class StageEditor extends MusicBeatState {
 	var currentFolder = "??";
 	var currentTrack = "Artistic Expression";
 
-	var editorVersion = "v0.1.4";
+	var editorVersion = "v0.1.5";
 	var changelog = [
+			{
+				version: "v0.1.5",
+				changes: [
+					"-- Additions --",
+					"Added Codename Engine to V-Slice stage converter.",
+				]
+			},
 			{
 				version: "v0.1.4",
 				changes: [
 					"-- Fixes --",
-					"Fix the positioning of stuff when scaled. (Nebula forgot to update the fucking hitbox)",
+					"Fixed the positioning of props when scaled. (Nebula forgot to update the fucking hitbox)",
 					"\n-- Tweaks --",
-					"Stage Data window opens by default."
+					"Made \"Stage Data\" window be open by default."
 				]
 			},
 			{
 				version: "v0.1.3",
 				changes: [
-					"-- Aditions --",
+					"-- Additions --",
 					"Added Editor Controls To Help Menu",
 					"Added Volume Slider To \"Song Data\" Window",
 					"Added The Ability To Update The Editor From Within Game",
@@ -725,6 +732,7 @@ class StageEditor extends MusicBeatState {
 		FileUtil.browseForSaveFile([FileUtil.FILE_FILTER_JSON], (path)->{
 			trace(fixPath(path));
 			writeStageFile(fixPath(path), curStageData.stage);
+			FlxTransitionableState.skipNextTransIn = true;
 			FlxG.switchState(ScriptedMusicBeatState.init('StageEditor'));
 		}, null, curStageData.fileName);
 	}
@@ -737,6 +745,7 @@ class StageEditor extends MusicBeatState {
 		FileUtil.browseForSaveFile([FileUtil.FILE_FILTER_JSON], (path)->{
 			trace(fixPath(path));
 			writeStageFile(fixPath(path), templateStage);
+			FlxTransitionableState.skipNextTransIn = true;
 			FlxG.switchState(ScriptedMusicBeatState.init('StageEditor'));
 		}, null, name);
 	}
@@ -955,7 +964,7 @@ class StageEditor extends MusicBeatState {
 		
 		parseJsoncString(FileUtil.readStringFromPath(currentFolder + "/data/stages/stage.nStage"));
 
-		Converters = ModuleHandler.getModule("NovaConverters");
+		Converters = ModuleHandler.getModule("StageConverters");
 
 		Cursor.show();
 
@@ -2045,11 +2054,30 @@ class StageEditor extends MusicBeatState {
 		var converterMenu = new Menu();
 		converterMenu.text = "Converters";
 
-		var comingSoon = new MenuItem();
-		comingSoon.text = "CNE Conversion Coming Soon!";
-		converterMenu.addComponent(comingSoon);
+		var codenameToVSlice = new MenuItem();
+		codenameToVSlice.text = "Codename Engine to V-Slice";
+		codenameToVSlice.onClick = ()->{
+			FileUtil.browseForTextFile("Select Codename Engine Stage File", [FILE_FILTER_XML], (data)->{
+				var convertedFile = Converters.scriptCall("fromCNE", [Xml.parse(data.text)]);
+				var theName = data.name.split("");
+				theName[0] = theName[0].toUpperCase();
+				var finalName = theName.join("");
+				finalName = StringTools.replace(finalName, ".xml", "");
+				convertedFile.name = finalName;
+				FileUtil.browseForSaveFile([FileUtil.FILE_FILTER_JSON], (destPath)->{
+					writeStageFile(fixPath(destPath), convertedFile);
+					FlxTransitionableState.skipNextTransIn = true;
+					FlxG.switchState(ScriptedMusicBeatState.init('StageEditor'));
+				}, null, StringTools.replace(data.name, ".xml", ".json"));
+			});
+		}
+		converterMenu.addComponent(codenameToVSlice);
+		
+		var vsliceToCodename = new MenuItem();
+		vsliceToCodename.text = "V-Slice to Codename Engine (COMING SOON)";
+		converterMenu.addComponent(vsliceToCodename);
+		
 		topBar.addComponent(converterMenu);
-
 
 		var help = new Menu();
 		help.text = "Help";
