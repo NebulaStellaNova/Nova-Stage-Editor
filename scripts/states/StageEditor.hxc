@@ -150,12 +150,21 @@ class StageEditor extends MusicBeatState {
 	var currentFolder = "??";
 	var currentTrack = "Artistic Expression";
 
-	var editorVersion = "v0.1.3";
+	var editorVersion = "v0.1.4";
 	var changelog = [
+			{
+				version: "v0.1.4",
+				changes: [
+					"-- Fixes --",
+					"Fix the positioning of stuff when scaled. (Nebula forgot to update the fucking hitbox)",
+					"\n-- Tweaks --",
+					"Stage Data window opens by default."
+				]
+			},
 			{
 				version: "v0.1.3",
 				changes: [
-					"\n-- Aditions --",
+					"-- Aditions --",
 					"Added Editor Controls To Help Menu",
 					"Added Volume Slider To \"Song Data\" Window",
 					"Added The Ability To Update The Editor From Within Game",
@@ -164,9 +173,9 @@ class StageEditor extends MusicBeatState {
 					"\n-- Removals --",
 					"Removed Check Boxes Under \"Windows\"",
 					"\n-- Fixes --",
-					"Fixed Error When Re-Opening Stage Data Window"
+					"Fixed Error When Re-Opening Stage Data Window",
 					"\n-- Tweaks --",
-					"Made Version Checker Use Polymod Meta JSON",
+					"Made Version Checker Use Polymod Meta JSON"
 				]
 			},
 			{
@@ -227,8 +236,8 @@ class StageEditor extends MusicBeatState {
 	var stageWindow;
 	var songWindow;
 
-	var offsetX = FlxG.width/4;
-	var offsetY = FlxG.height/4;
+	var offsetX = 0;//-(FlxG.width/2);
+	var offsetY = 0;//FlxG.height/4;
 
 	var didFirstCheck = false;
 
@@ -849,6 +858,7 @@ class StageEditor extends MusicBeatState {
 				i.scale != null ? i.scale[0] : 1,
 				i.scale != null ? i.scale[1] : 1
 			);
+			prop.updateHitbox();
 			if (i.zIndex == prevIndex) {
 				i.zIndex++;
 			}
@@ -885,7 +895,7 @@ class StageEditor extends MusicBeatState {
 	}
 
 	function new(){
-		super('CharacterEditor');
+		super('StageEditor');
 		h = FlxG.height;
 		w = FlxG.width;
 		brightenShader.data.offset.value = [0.0];
@@ -1139,7 +1149,7 @@ class StageEditor extends MusicBeatState {
 		stageDataOption = new MenuItem();
 		stageDataOption.text = "Stage Data";
 		//stageDataOption.selected = false;
-		stageDataOption.onClick = ()->{
+		var openStageDataWindow = ()->{
 			//stageWindowOpened = !stageWindowOpened;
 			//stageDataOption.selected = stageWindowOpened;
 			if (stageWindow == null || !stageWindow.visible) {
@@ -1820,6 +1830,8 @@ class StageEditor extends MusicBeatState {
 				windowManager.closeWindow(stageWindow);
 			}
 		}
+
+		stageDataOption.onClick = openStageDataWindow;
 	   
 		windowsMenu.addComponent(stageDataOption);
 
@@ -2095,6 +2107,9 @@ class StageEditor extends MusicBeatState {
 		//stageWindow.addComponent(stageList);
 		propList = new ListView();
 		loadStage(stageDatas[0]);
+		new FlxTimer().start(0.1, ()->{
+			openStageDataWindow();
+		});
 		
 	}
 
