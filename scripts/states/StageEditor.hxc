@@ -108,6 +108,10 @@ import openfl.net.URLRequest;
 import funkin.modding.PolymodHandler;
 
 import flixel.addons.transition.FlxTransitionableState;
+import openfl.net.FileFilter;
+
+import openfl.net.URLLoader;
+import openfl.net.URLRequest;
 
 class StageEditor extends MusicBeatState {
 
@@ -155,8 +159,16 @@ class StageEditor extends MusicBeatState {
 	var currentFolder = "??";
 	var currentTrack = "Artistic Expression";
 
-	var editorVersion = "v0.1.6";
+	var editorVersion = "v0.1.7";
 	var changelog = [
+			{
+				version: "v0.1.7",
+				changes: [
+					"-- Additions --",
+					"Added \"Save for Psych Engine\" inside of file menu.",
+					"Added live chat inside of User Guide window.",
+				]
+			},
 			{
 				version: "v0.1.6",
 				changes: [
@@ -267,6 +279,8 @@ class StageEditor extends MusicBeatState {
 	var debugTexts = [];
 
 	var cancelUpdate = false;
+
+	var chatText = new Label();
 
 	function debugPrint(text) {
 		var text = new FlxText(0, 50, FlxG.width, text);
@@ -685,6 +699,48 @@ class StageEditor extends MusicBeatState {
 		var thanksLabel = new Label();
 		thanksLabel.text = "\n\nHUGE Thanks To V-Slice Network for providing tips when I was \ncoding this.\n- Nebula S. Nova";
 		discordTab.addComponent(thanksLabel);
+
+		var chatTab = new VBox();
+		chatTab.text = 'Live Chat';
+		helpTabs.addComponent(chatTab);
+
+
+
+		var usernameField = new TextField();
+		usernameField.placeholder = "Type Display Name Here";
+		usernameField.color = 0xFFaaaaaa;
+		usernameField.width = 449;
+		chatTab.addComponent(usernameField);
+
+		var chatbox = new HBox();
+		chatTab.addComponent(chatbox);
+
+		var messageField = new TextField();
+		messageField.placeholder = "Type Message Here";
+		messageField.color = 0xFFaaaaaa;
+		messageField.width = 375;
+		chatbox.addComponent(messageField);
+
+		var sendButton = new Button();
+		sendButton.text = "Send";
+		sendButton.color = 0xFFaaaaaa;
+		sendButton.width = 69;
+		sendButton.onClick = ()->{
+			sendChatMessage(usernameField.text, messageField.text);
+		}
+		chatbox.addComponent(sendButton);
+
+		var chatScrollView = new ScrollView();
+		chatScrollView.contentWidth = 449 - 30;
+		chatScrollView.width = 449;
+		chatScrollView.height = 419;
+		chatTab.addComponent(chatScrollView);
+
+		chatText.width = helpTabs.width;
+		chatText.text = serverData;
+		chatScrollView.addComponent(chatText);
+
+		
 					
 		helpWindow.addComponent(helpTabs);
 	}
@@ -1090,6 +1146,7 @@ class StageEditor extends MusicBeatState {
 
 		var fileMenu = new Menu();
 		fileMenu.text = "File";
+		fileMenu.width = 300;
 	
 		var newItem = new MenuItem();
 		newItem.text = "New";
@@ -1171,6 +1228,113 @@ class StageEditor extends MusicBeatState {
 			saveStageAs();
 		}
 		fileMenu.addComponent(saveAsItem);
+
+		var saveAsItemPsych = new MenuItem();
+		saveAsItemPsych.text = "Save For Psych Engine";
+		saveAsItemPsych.onClick = ()-> {
+
+			var finalName = StringTools.replace(curStageData.fileName, ".json", "");
+
+			var constructLuaFunction = function(name:String, parameters:Array<String>) {
+				return "\t" + name + "(" + parameters.join(", ") + ")";
+			}
+			var createCode = [];
+			for (i in propDatas) {
+				createCode.push(constructLuaFunction("makeLuaSprite", ['"' + i.name + '"', i.position[0] ?? 0, i.position[1] ?? 0, '"' + i.assetPath + '"']));
+				createCode.push(constructLuaFunction("scaleObject", ['"' + i.name + '"', i.scale[0] ?? 1, i.scale[1] ?? 1]));
+				createCode.push(constructLuaFunction("setScrollFactor", ['"' + i.name + '"', i.scroll[0] ?? 1, i.scroll[1] ?? 1]));
+				createCode.push(constructLuaFunction("setProperty", ['"' + i.name + '.flipX"', i.flipX ?? false]));
+				createCode.push(constructLuaFunction("setProperty", ['"' + i.name + '.flipY"', i.flipY ?? false]));
+				createCode.push(constructLuaFunction("updateHitbox", ['"' + i.name + '"']));
+				createCode.push(constructLuaFunction("addLuaSprite", ['"' + i.name + '"', i.zIndex > curStageData.stage.characters.bf.zIndex]));
+				createCode.push("\n");
+			}
+			for (i in ["boyfriend", "gf", "dad"]) {
+				createCode.push("\n" + constructLuaFunction("setProperty", ['"' + i + '.x", getProperty("' + i + '.x") - (getProperty("' + i + '.width") / 2)']));
+				createCode.push(constructLuaFunction("setProperty", ['"' + i + '.y", getProperty("' + i + '.y") - getProperty("' + i + '.height")']));
+			}
+
+			var finalCode = "\nfunction onCreate()\n" + createCode.join("\n") + "\nend";
+			finalCode = StringTools.replace(finalCode, "\n\n\n", "\n\n");
+
+			FileUtil.writeStringToPath("psych_stages/" + finalName + ".lua", finalCode);
+			FileUtil.deleteFile("psych_stages/" + finalName + ".lua");
+			FileUtil.writeStringToPath("psych_stages/" + finalName + ".lua", finalCode);
+			
+
+			var jsonData = {
+				defaultZoom: curStageData.stage.cameraZoom,
+
+				boyfriend: [
+					curStageData.stage.characters.bf.position[0],
+					curStageData.stage.characters.bf.position[1]
+				],
+				girlfriend: [
+					curStageData.stage.characters.gf.position[0],
+					curStageData.stage.characters.gf.position[1]
+				],
+				opponent: [
+					curStageData.stage.characters.dad.position[0],
+					curStageData.stage.characters.dad.position[1]
+				],
+
+				camera_boyfriend: [
+					curStageData.stage.characters.bf.cameraOffsets[0],
+					curStageData.stage.characters.bf.cameraOffsets[1]
+				],
+				camera_girlfriend: [
+					curStageData.stage.characters.gf.cameraOffsets[0], 
+					curStageData.stage.characters.gf.cameraOffsets[1]
+				],
+				camera_opponent: [
+					curStageData.stage.characters.dad.cameraOffsets[0], 
+					curStageData.stage.characters.dad.cameraOffsets[1]
+				],
+				camera_speed: 1
+			}
+
+			var jsonString = Json.stringify(jsonData, null, "\t");
+
+			FileUtil.writeStringToPath("psych_stages/" + finalName + ".json", jsonString);
+			FileUtil.deleteFile("psych_stages/" + finalName + ".json");
+			FileUtil.writeStringToPath("psych_stages/" + finalName + ".json", jsonString);
+
+			var editWindow =  new Window();
+			editWindow.title = "Saved Stage!";
+			editWindow.maximizable = false;
+			editWindow.minimizable = false;
+			editWindow.collapsable = false;
+			editWindow.width = 350;
+			editWindow.height = 115;      
+			var label = new Label();
+			label.text = "Psych Engine stage saved to \"psych_stages/\"";
+			editWindow.addComponent(label);
+			editWindow.screenCenter();
+			// curPropData
+				
+			var ok = new Button();
+			ok.text = "OK";
+			ok.marginTop = 3;
+			ok.marginLeft = stageWindow.width - 20;
+
+			editWindow.windowManager = windowManager;
+			editWindow.addComponent(ok);
+			add(editWindow);
+			ok.onClick = ()->{
+				windowManager.closeWindow(editWindow);
+			}
+
+			FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
+
+			
+			// saveStageAs();
+
+		}
+		fileMenu.addComponent(saveAsItemPsych);
+		
+		var saveForCodename = new MenuItem();
+		saveForCodename.text = "Save For Codename Engine (Coming Soon)";
+		fileMenu.addComponent(saveForCodename);
 
 		var separator = new MenuSeparator();
 		fileMenu.addComponent(separator);
@@ -1465,7 +1629,7 @@ class StageEditor extends MusicBeatState {
 					editWindow.minimizable = false;
 					editWindow.collapsable = false;
 					editWindow.width = 300;
-					editWindow.height = 380;
+					editWindow.height = 285;
 					if (curPropData != null) {
 						editWindow.title = "Edit Prop: " + curPropData.name;
 
@@ -2107,10 +2271,6 @@ class StageEditor extends MusicBeatState {
 		}
 		converterMenu.addComponent(codenameToVSlice);
 		
-		var vsliceToCodename = new MenuItem();
-		vsliceToCodename.text = "V-Slice to Codename Engine (COMING SOON)";
-		converterMenu.addComponent(vsliceToCodename);
-		
 		topBar.addComponent(converterMenu);
 
 		var help = new Menu();
@@ -2410,8 +2570,8 @@ class StageEditor extends MusicBeatState {
 						}
 						if (FlxG.mouse.overlaps(currentlyAddedProps[propIndex]) && FlxG.mouse.pressed) {
 							var mult = (cameraTarget.zoom*2);
-							i.position[0] += FlxG.mouse.deltaX;
-							i.position[1] += FlxG.mouse.deltaY;
+							i.position[0] += FlxG.mouse.deltaX * (1/camGame.zoom);
+							i.position[1] += FlxG.mouse.deltaY * (1/camGame.zoom);
 							i.scale[0] -= FlxG.mouse.wheel/10;
 							i.scale[1] -= FlxG.mouse.wheel/10;
 						}
@@ -2482,6 +2642,12 @@ class StageEditor extends MusicBeatState {
 		//Conductor.instance.update();
 		
 		get_conductorInUse().update();
+
+		chatText.text = serverData;
+		getServerData();
+		if (FlxG.keys.justPressed.Y) {
+			sendChatMessage("Nebula S. Nova", "hello!");
+		}
 	}
 
 	override function stepHit() {
@@ -2498,7 +2664,9 @@ class StageEditor extends MusicBeatState {
 		var beat = get_conductorInUse().currentBeat;
 		// trace("Hit Beat");
 		if (!FlxG.keys.pressed.Q && !FlxG.keys.pressed.E && !FlxG.mouse.pressed) {
-			camGame.zoom *= 1.02;
+			if (camGame != null) {
+				camGame.zoom *= 1.02;
+			}
 		}
 		//if (g)
 		
@@ -2526,4 +2694,42 @@ class StageEditor extends MusicBeatState {
 		super.destroy();
 		WindowUtil.setWindowTitle("Friday Night Funkin'");
 	}
+
+	// -------------------- Server Handling -------------------- \\
+
+	var address = {
+        host: "basic-fabrics.gl.at.ply.gg",
+        port: 21936
+    }
+
+	var serverData = "";
+
+	var dataToSet = "";
+
+	function sendChatMessage(username, message, force = false) {
+		dataToSet = "< " + username + " > " + message;
+
+		var loader = new URLLoader();
+        loader.addEventListener("complete", ()->{
+            serverData = loader.data;
+			loader2 = new URLLoader();
+			var request2 = new URLRequest("http://" + address.host + ":" + address.port + "");
+			request2.method = "POST";
+			request2.data = serverData + "\n" + dataToSet;
+			loader2.load(request2);
+        });
+        var request = new URLRequest("http://" + address.host + ":" + address.port + "");
+        loader.load(request);
+
+        
+    }
+
+    function getServerData() {
+        var loader = new URLLoader();
+        loader.addEventListener("complete", ()->{
+            serverData = loader.data;
+        });
+        var request = new URLRequest("http://" + address.host + ":" + address.port + "");
+        loader.load(request);
+    }
 }
