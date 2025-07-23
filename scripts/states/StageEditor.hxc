@@ -162,7 +162,7 @@ class StageEditor extends MusicBeatState {
 				changes: [
 					"-- Additions --",
 					"Added background to the editor.",
-					"-- Fixes --",
+					"\n-- Fixes --",
 					"Fixed the Z Index stepper changing by 1/10.",
 					"\n-- Tweaks --",
 					"Rename Z Index stepper to \"Layer/Z Index.\""
