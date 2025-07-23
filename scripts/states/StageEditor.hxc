@@ -159,8 +159,19 @@ class StageEditor extends MusicBeatState {
 	var currentFolder = "??";
 	var currentTrack = "Artistic Expression";
 
-	var editorVersion = "v0.1.7";
+	var editorVersion = "v0.1.8";
 	var changelog = [
+			{
+				version: "v0.1.8",
+				changes: [
+					"-- Additions --",
+					"Added visibility toggle for character edit panel.",
+					"\n-- Tweaks --",
+					"Made Boyfriend, Dad, and Girlfriend load by default.",
+					"\n-- Fixes --",
+					"Fixed props not moving with cursor correctly."
+				]
+			},
 			{
 				version: "v0.1.7",
 				changes: [
@@ -651,12 +662,11 @@ class StageEditor extends MusicBeatState {
 			"- Codename Engine Stage Converter.",
 			"- Chart/Stage testing in-editor.",
 			"- Editor preferences.", 
-			"- Character visiblity toggle.", 
+			"✓ Character visiblity toggle.", 
 			"- Prop blend modes.", 
 			"",
 			"--   Fixes   --",
 			"",
-			"- Prop position being wrong when scaled with non-1 scroll factor.",
 			"- Song waveform being inaccurate."
 		];
 		for (i in lines) {
@@ -1630,7 +1640,7 @@ class StageEditor extends MusicBeatState {
 					editWindow.minimizable = false;
 					editWindow.collapsable = false;
 					editWindow.width = 300;
-					editWindow.height = 285;
+					editWindow.height = 378;
 					if (curPropData != null) {
 						editWindow.title = "Edit Prop: " + curPropData.name;
 
@@ -1705,6 +1715,7 @@ class StageEditor extends MusicBeatState {
 						xStepper.pos = curPropData.position != null ? curPropData.position[0] : 0;
 						xStepper.width = 80;
 						xStepper.onChange = ()->{
+							xStepper.pos = Math.round(xStepper.pos);
 							curPropData.position[0] = xStepper.pos;
 						}
 						curPropSteppers.push(xStepper);
@@ -1714,6 +1725,7 @@ class StageEditor extends MusicBeatState {
 						yStepper.pos = curPropData.position != null ? curPropData.position[1] : 0;
 						yStepper.width = 80;
 						yStepper.onChange = ()->{
+							yStepper.pos = Math.round(yStepper.pos);
 							curPropData.position[1] = yStepper.pos;
 						}
 						curPropSteppers.push(yStepper);
@@ -1813,7 +1825,7 @@ class StageEditor extends MusicBeatState {
 
 						var isPixelLabel = new Label();
 						isPixelLabel.text = "Is Pixel:";
-						isPixelLabel.marginTop = 5;
+						isPixelLabel.marginTop = 2;
 
 						var isPixelBox = new HBox();
 						isPixelBox.addComponent(isPixelLabel);
@@ -1829,7 +1841,7 @@ class StageEditor extends MusicBeatState {
 
 						var flipXLabel = new Label();
 						flipXLabel.text = "Flip X:";
-						flipXLabel.marginTop = 5;
+						flipXLabel.marginTop = 2;
 
 						var flipXBox = new HBox();
 						flipXBox.addComponent(flipXLabel);
@@ -1845,7 +1857,7 @@ class StageEditor extends MusicBeatState {
 
 						var flipYLabel = new Label();
 						flipYLabel.text = "Flip Y:";
-						flipYLabel.marginTop = 5;
+						flipYLabel.marginTop = 2;
 
 						var flipYBox = new HBox();
 						flipYBox.addComponent(flipYLabel);
@@ -1947,7 +1959,7 @@ class StageEditor extends MusicBeatState {
 					editWindow.collapsable = false;
 					editWindow.windowManager = windowManager;
 					editWindow.width = 300;
-					editWindow.height = 155;
+					editWindow.height = 178;
 					editWindow.screenCenter();
 					add(editWindow);
 					FunkinSound.playOnce(Paths.sound("chartingSounds/openWindow"), 1);
@@ -1989,7 +2001,6 @@ class StageEditor extends MusicBeatState {
 					zIndexBox.addComponent(zIndexLabel);
 					zIndexBox.addComponent(zIndexStepper);
 					editWindow.addComponent(zIndexBox);
-					
 
 					// -- Offsets -- \\
 					var offsetsLabel = new Label();
@@ -2017,6 +2028,28 @@ class StageEditor extends MusicBeatState {
 					offsetsBox.addComponent(xStepper);
 					offsetsBox.addComponent(yStepper);
 					editWindow.addComponent(offsetsBox);
+
+					
+					var visiblityBox = new HBox();
+
+					var visiblityLabel = new Label();
+					visiblityLabel.text = "Visible:";
+					visiblityLabel.marginTop = 2;
+					visiblityBox.addComponent(visiblityLabel);
+					
+					var visiblityToggle = new CheckBox();
+					visiblityToggle.selected = curCharacter.visible;
+					visiblityToggle.onChange = ()->{
+						curCharacter.visible = visiblityToggle.selected;
+					}
+					visiblityBox.addComponent(visiblityToggle);
+
+					var visiblityWarnLabel = new Label();
+					visiblityWarnLabel.text = "(Editor Only)";
+					visiblityWarnLabel.marginTop = 2;
+					visiblityBox.addComponent(visiblityWarnLabel);
+
+					editWindow.addComponent(visiblityBox);
 
 					var ok = new Button();
 					ok.text = "Confirm";
@@ -2340,6 +2373,18 @@ class StageEditor extends MusicBeatState {
 
 		propList = new ListView();
 		loadStage(stageDatas[0]);
+		for (i in characterDatas) {
+			if (i.character.name == "Boyfriend") {
+				loadCharacter(i, "player");
+			}
+			if (i.character.name == "Daddy Dearest") {
+				loadCharacter(i, "opponent");
+			}
+
+			if (i.character.name == "Girlfriend") {
+				loadCharacter(i, "spectator");
+			}
+		}
 		new FlxTimer().start(0.1, ()->{
 			openStageDataWindow();
 		});
