@@ -736,6 +736,7 @@ class StageEditor extends MusicBeatState {
 		chatScrollView.height = 419;
 		chatTab.addComponent(chatScrollView);
 
+		chatText = new Label(); 
 		chatText.width = helpTabs.width;
 		chatText.text = serverData;
 		chatScrollView.addComponent(chatText);
