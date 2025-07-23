@@ -1003,6 +1003,13 @@ class StageEditor extends MusicBeatState {
 			character: parseJsonFile("assets/data/characters/gf.json"),
 			polyMeta: null
 		});
+		characterDatas.push({
+			id: "dad",
+			fileName: "dad.json",
+			path: "assets",
+			character: parseJsonFile("assets/data/characters/dad.json"),
+			polyMeta: null
+		});
 
 		for (i in FileUtil.readDir("mods")) {
 			if (FileUtil.directoryExists("mods/" + i + "/data/stages/")) {
