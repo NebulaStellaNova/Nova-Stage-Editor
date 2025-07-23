@@ -110,6 +110,9 @@ import funkin.modding.PolymodHandler;
 import flixel.addons.transition.FlxTransitionableState;
 
 class StageEditor extends MusicBeatState {
+
+	var bg:FunkinSprite;
+
 	var doCrash = false;
 
 	// -- Shaders -- \\
@@ -144,19 +147,32 @@ class StageEditor extends MusicBeatState {
 
 	var stageName;
 
+	var camBackground;
+	var camGame;
 	var camHUD;
 	var camDropDown; // FUCK YOU HAXE UI
 
 	var currentFolder = "??";
 	var currentTrack = "Artistic Expression";
 
-	var editorVersion = "v0.1.5";
+	var editorVersion = "v0.1.6";
 	var changelog = [
+			{
+				version: "v0.1.6",
+				changes: [
+					"-- Additions --",
+					"Added background to the editor.",
+					"-- Fixes --",
+					"Fixed the Z Index stepper changing by 1/10.",
+					"\n-- Tweaks --",
+					"Rename Z Index stepper to \"Layer/Z Index.\""
+				]
+			},
 			{
 				version: "v0.1.5",
 				changes: [
 					"-- Additions --",
-					"Added Codename Engine to V-Slice stage converter.",
+					"Added Codename Engine to V-Slice stage converter."
 				]
 			},
 			{
@@ -822,6 +838,9 @@ class StageEditor extends MusicBeatState {
 	}
 
 	function loadStage(stageData) {
+
+		
+
 		curStageData = stageData;
 		var stage = stageData.stage;
 		cameraTarget.zoom = stage.cameraZoom;
@@ -913,6 +932,7 @@ class StageEditor extends MusicBeatState {
 	function create() {
 		super.create();
 
+	
 
 		checkForUpdates();
 		
@@ -1046,6 +1066,13 @@ class StageEditor extends MusicBeatState {
 			}
 		}
 		
+
+		camBackground = new FlxCamera();
+		FlxG.cameras.add(camBackground, false);
+
+		camGame = new FlxCamera();
+		camGame.bgColor = 0x00000000;
+		FlxG.cameras.add(camGame, true);
 
 		camHUD = new FlxCamera();
 		camHUD.bgColor = 0x00000000;
@@ -1595,7 +1622,7 @@ class StageEditor extends MusicBeatState {
 
 						// -- Z Index -- \\
 						var zIndexStepper = new NumberStepper();
-						zIndexStepper.step = 0.1;
+						zIndexStepper.step = 1;
 						zIndexStepper.pos = curPropData.zIndex != null ? curPropData.zIndex : 1;
 						zIndexStepper.width = 80;
 						zIndexStepper.min = 0;
@@ -1604,7 +1631,7 @@ class StageEditor extends MusicBeatState {
 						}
 
 						var zIndexLabel = new Label();
-						zIndexLabel.text = "Z Index:";
+						zIndexLabel.text = "Layer/Z Index:";
 						zIndexLabel.marginTop = 7;
 
 						var xIndexBox = new HBox();
@@ -2140,6 +2167,16 @@ class StageEditor extends MusicBeatState {
 		// }
 
 		//stageWindow.addComponent(stageList);
+
+		bg = new FunkinSprite(0, 0).loadGraphic(Paths.image('menuDesat'));
+		bg.scrollFactor.set(0, 0);
+		bg.setGraphicSize(FlxG.width, FlxG.height);
+		bg.updateHitbox();
+		bg.screenCenter();
+		bg.alpha = 0.25;
+		bg.cameras = [camBackground];
+		add(bg);
+
 		propList = new ListView();
 		loadStage(stageDatas[0]);
 		new FlxTimer().start(0.1, ()->{
@@ -2179,6 +2216,7 @@ class StageEditor extends MusicBeatState {
 
 	function update(elapsed) {
 		super.update(elapsed);
+
 
 		if (cancelUpdate) { return;}
 
@@ -2333,9 +2371,9 @@ class StageEditor extends MusicBeatState {
 
 		WindowUtil.setWindowTitle(windowTitlePrefix + "Friday Night Funkin'" + windowTitleSuffix);
 
-		FlxG.camera.scroll.x = MathUtil.coolLerp(FlxG.camera.scroll.x, cameraTarget.x, 0.1);
-		FlxG.camera.scroll.y = MathUtil.coolLerp(FlxG.camera.scroll.y, cameraTarget.y, 0.1);
-		FlxG.camera.zoom = MathUtil.coolLerp(FlxG.camera.zoom, cameraTarget.zoom, 0.1);
+		camGame.scroll.x = MathUtil.coolLerp(camGame.scroll.x, cameraTarget.x, 0.1);
+		camGame.scroll.y = MathUtil.coolLerp(camGame.scroll.y, cameraTarget.y, 0.1);
+		camGame.zoom = MathUtil.coolLerp(camGame.zoom, cameraTarget.zoom, 0.1);
 
 		disableInput = false;
 		if (!disableInput) {
@@ -2460,7 +2498,7 @@ class StageEditor extends MusicBeatState {
 		var beat = get_conductorInUse().currentBeat;
 		// trace("Hit Beat");
 		if (!FlxG.keys.pressed.Q && !FlxG.keys.pressed.E && !FlxG.mouse.pressed) {
-			FlxG.camera.zoom *= 1.02;
+			camGame.zoom *= 1.02;
 		}
 		//if (g)
 		
