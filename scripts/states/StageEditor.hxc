@@ -2112,6 +2112,7 @@ class StageEditor extends MusicBeatState {
 				songList.dataSource.add({text: "Hands Up! (Excellent Pico)"});
 				songList.dataSource.add({text: "Results Good"});
 				songList.dataSource.add({text: "Get Out The Way! (Good Pico)"});
+				songList.dataSource.add({text: "The Peak"});
 				//for (i in songDatas) {
 					//songList.dataSource.add({text: i.song.name});
 				//}
@@ -2186,6 +2187,13 @@ class StageEditor extends MusicBeatState {
 							save.data.editorSong = {
 								title: "Get Out The Way! (Good Pico)",
 								key: "resultsNORMAL-pico"
+							}
+						case "The Peak":
+							FunkinSound.playMusic("thePeak", {startingVolume: 0, overrideExisting: true, restartTrack: false, persist: true, loop: true});
+							FlxG.sound.music.fadeIn(0.5 /* Duration */, 0, 1);
+							save.data.editorSong = {
+								title: "The Peak",
+								key: "thePeak"
 							}
 
 					}
