@@ -165,7 +165,7 @@ class StageEditor extends MusicBeatState {
 				version: "v0.1.8",
 				changes: [
 					"-- Additions --",
-					"Added visibility toggle for character edit panel.",
+					"Added visibility toggle to character edit panel.",
 					"\n-- Tweaks --",
 					"Made Boyfriend, Dad, and Girlfriend load by default.",
 					"\n-- Fixes --",
