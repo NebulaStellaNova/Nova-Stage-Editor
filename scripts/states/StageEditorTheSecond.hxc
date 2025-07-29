@@ -74,6 +74,7 @@ class StageEditorTheSecond extends MusicBeatState {
             FlxG.switchState(new MainMenuState());
             //PolymodHandler.forceReloadAssets();
 		}
+        newNotification("Yo Dude", "Kill Yourself", NotificationType.Error);
     }
 
     function update() {
@@ -99,4 +100,11 @@ class StageEditorTheSecond extends MusicBeatState {
         FlxG.switchState(new MainMenuState());
     }
 
+    function newNotification(title:String, body:String, ?type) {
+        notificationManager.addNotification({
+            title: title,
+            body: body,
+            type: type ?? NotificationType.Default
+        });
+    }
 }
