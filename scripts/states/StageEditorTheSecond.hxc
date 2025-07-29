@@ -55,9 +55,23 @@ import haxe.ui.notifications.NotificationType;
 
 import funkin.graphics.FunkinSprite;
 
+import flixel.addons.display.shapes.FlxShapeCircle;
+import flixel.addons.display.shapes.FlxShapeBox;
+import flixel.addons.effects.chainable.FlxOutlineEffect;
+import flixel.addons.effects.chainable.FlxEffectSprite;
+
 class StageEditorTheSecond extends MusicBeatState {
 
     var notificationManager = new NotificationManager();
+	var windowManager = new WindowManager();
+
+    var targetSprite:FunkinSprite = null;
+
+    var transformSprites = {
+        centerCircle: null,
+        rightCircle: null,
+        outline: null
+    }
 
     function new() {
         super('StageEditorTheSecond');
@@ -68,10 +82,44 @@ class StageEditorTheSecond extends MusicBeatState {
         Cursor.show();
 		var chartEditor = new ChartEditorState();
 
-        var mainMenuUI = RuntimeComponentBuilder.build(Paths.ui("stage-editor/menubar"));
-        add(mainMenuUI);
+        var bg = new FunkinSprite(0, 0).loadGraphic(Paths.image('menuDesat'));
+		bg.scrollFactor.set(0, 0);
+		bg.setGraphicSize(FlxG.width, FlxG.height);
+		bg.updateHitbox();
+		bg.screenCenter();
+		bg.alpha = 0.25;
+		// bg.cameras = [camBackground];
+		add(bg);
 
-        var exitToMenuItem = mainMenuUI.findComponent("exitToMenu");
+        /* var iconTest = new FunkinSprite(0, 100).loadGraphic(Paths.image("icons/icon-bf"));
+        add(iconTest);
+        targetSprite = iconTest;
+
+        var outline:FlxShapeBox = new FlxShapeBox(targetSprite.x, targetSprite.y, targetSprite.width, targetSprite.height, {
+            thickness: 2,
+            color: 0xFFFFFFFF
+        }, 0x00000000); // Green filled circle
+        transformSprites.outline = outline;
+        add(outline);
+
+        var circle:FlxShapeCircle = new FlxShapeCircle(100, 100, 7.5, {
+            thickness: 2,
+            color: 0xFFFFFFFF
+        }, 0x88000000); // Green filled circle
+        transformSprites.centerCircle = circle;
+        add(circle);
+
+        var circle:FlxShapeCircle = new FlxShapeCircle(100, 100, 7.5, {
+            thickness: 2,
+            color: 0xFFFFFFFF
+        }, 0x88000000); // Green filled circle
+        transformSprites.rightCircle = circle;
+        add(circle); */
+
+        var menuBar = RuntimeComponentBuilder.build(Paths.ui("stage-editor/menubar"));
+        add(menuBar);
+
+        var exitToMenuItem = menuBar.findComponent("exitToMenu");
         exitToMenuItem.onClick = ()->{
             FlxG.switchState(new MainMenuState());
             //PolymodHandler.forceReloadAssets();
@@ -80,15 +128,62 @@ class StageEditorTheSecond extends MusicBeatState {
 
         var stageDataWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/stageDataWindow"));
         stageDataWindow.screenCenter();
+        stageDataWindow.windowManager = windowManager;
         add(stageDataWindow);
 
-
-
+        stageDataWindow.title = "Stage Data";
+        stageDataWindow.x = FlxG.width - stageDataWindow.width - 10;
+        stageDataWindow.y = menuBar.height + 10;
     }
+
+    var targetSpriteY = 0;
 
     function update() {
         super.update();        
         get_conductorInUse().update();
+
+        if (targetSprite != null) {
+
+            transformSprites.rightCircle.x += FlxG.mouse.deltaX;
+            transformSprites.rightCircle.y += FlxG.mouse.deltaY;
+            
+            transformSprites.centerCircle.x += FlxG.mouse.deltaX;
+            transformSprites.centerCircle.y += FlxG.mouse.deltaY;
+            if (FlxG.mouse.overlaps(transformSprites.centerCircle) && FlxG.mouse.pressed) {
+                targetSprite.x += FlxG.mouse.deltaX;
+                targetSprite.y += FlxG.mouse.deltaY;
+            }
+
+            if (FlxG.mouse.overlaps(transformSprites.rightCircle) && FlxG.mouse.justPressed) {
+                targetSpriteY = targetSprite.y + targetSprite.height;
+            }
+            
+            if (FlxG.mouse.overlaps(transformSprites.rightCircle) && FlxG.mouse.pressed) {
+                targetSprite.scale.x += FlxG.mouse.deltaX/300;
+                targetSprite.scale.y -= FlxG.mouse.deltaY/150;
+                targetSprite.y = targetSpriteY - targetSprite.height;
+            }
+            targetSprite.updateHitbox();
+
+            transformSprites.centerCircle.x = targetSprite.x + (targetSprite.width/2) - (transformSprites.centerCircle.width/2);
+            transformSprites.centerCircle.y = targetSprite.y + (targetSprite.height/2) - (transformSprites.centerCircle.height/2);
+
+            transformSprites.outline.scale.x = targetSprite.scale.x;
+            transformSprites.outline.scale.y = targetSprite.scale.y;
+
+            transformSprites.outline.x = targetSprite.x;
+            transformSprites.outline.y = targetSprite.y;
+
+            transformSprites.outline.updateHitbox();
+
+
+            transformSprites.rightCircle.x = targetSprite.x + targetSprite.width - (transformSprites.rightCircle.width/2);
+            transformSprites.rightCircle.y = targetSprite.y - (transformSprites.rightCircle.height/2);
+        }
+
+        if (FlxG.mouse.justPressed) {
+            FlxG.sound.play(Paths.sound("click"));
+        }
     }
 
     override function beatHit() {
