@@ -53,6 +53,8 @@ import flixel.FlxG;
 import haxe.ui.notifications.NotificationManager;
 import haxe.ui.notifications.NotificationType;
 
+import funkin.graphics.FunkinSprite;
+
 class StageEditorTheSecond extends MusicBeatState {
 
     var notificationManager = new NotificationManager();
@@ -75,6 +77,13 @@ class StageEditorTheSecond extends MusicBeatState {
             //PolymodHandler.forceReloadAssets();
 		}
         newNotification("Yo Dude", "Kill Yourself", NotificationType.Error);
+
+        var stageDataWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/stageDataWindow"));
+        stageDataWindow.screenCenter();
+        add(stageDataWindow);
+
+
+
     }
 
     function update() {
