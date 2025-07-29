@@ -60,6 +60,8 @@ import flixel.addons.display.shapes.FlxShapeBox;
 import flixel.addons.effects.chainable.FlxOutlineEffect;
 import flixel.addons.effects.chainable.FlxEffectSprite;
 
+import haxe.ui.events.MouseEvent;
+
 class StageEditorTheSecond extends MusicBeatState {
 
     var notificationManager = new NotificationManager();
@@ -74,6 +76,7 @@ class StageEditorTheSecond extends MusicBeatState {
     }
 
     var editPropWindow;
+    var saveAsComponent;
 
     function new() {
         super('StageEditorTheSecond');
@@ -126,7 +129,27 @@ class StageEditorTheSecond extends MusicBeatState {
             FlxG.switchState(new MainMenuState());
             //PolymodHandler.forceReloadAssets();
 		}
-        newNotification("Yo Dude", "Kill Yourself", NotificationType.Error);
+
+        saveAsComponent = menuBar.findComponent("saveStageAs");
+        bind(saveAsComponent, MouseEvent.CLICK, test);
+
+        var saveStageComponent = menuBar.findComponent("saveStage");
+        saveStageComponent.onClick = ()->{ 
+            /* newNotification("New Update!", "A new update has been found!!", NotificationType.Warning, 3000, [
+                { 
+                    text: "Open Gamebanana", 
+                    callback: ()->{
+                        trace("Yo ??");
+                    } 
+                },
+                { 
+                    text: "Download and Install", 
+                    callback: ()->{
+                        trace("Yo ??");
+                    } 
+                }
+            ]); */
+		}
 
         var stageDataWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/stageDataWindow"));
         stageDataWindow.screenCenter();
@@ -138,7 +161,10 @@ class StageEditorTheSecond extends MusicBeatState {
         stageDataWindow.y = menuBar.height + 10;
         
         editPropWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/editPropWindow"));
+        editPropWindow.windowManager = windowManager;
         add(editPropWindow);
+
+        initNotification();
 
     }
 
@@ -212,11 +238,35 @@ class StageEditorTheSecond extends MusicBeatState {
         FlxG.switchState(new MainMenuState());
     }
 
-    function newNotification(title:String, body:String, ?type) {
+    function newNotification(title:String, body:String, ?type, ?expiryMs, ?actions) {
         notificationManager.addNotification({
             title: title,
             body: body,
-            type: type ?? NotificationType.Default
+            type: type ?? NotificationType.Default,
+            expiryMs: expiryMs ?? null,
+            actions: actions ?? []
         });
+    }
+
+    function initNotification() {
+        notificationManager.addNotification({
+            title: "Welcome!",
+            body: "Welcome to the Nova Stage Editor! Press F1 for a user guide.",
+            type: NotificationType.Default
+        });
+    }
+
+    public function test2() {
+        NotificationManager.instance.addNotification({
+            title: "Test",
+            body: "This is a test"
+        });
+    }
+
+    function bind(component, mouseEvent, func) {
+        switch (mouseEvent) {
+            case MouseEvent.CLICK:
+                component.onClick = func;
+        }
     }
 }
