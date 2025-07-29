@@ -73,6 +73,8 @@ class StageEditorTheSecond extends MusicBeatState {
         outline: null
     }
 
+    var editPropWindow;
+
     function new() {
         super('StageEditorTheSecond');
     }
@@ -134,6 +136,10 @@ class StageEditorTheSecond extends MusicBeatState {
         stageDataWindow.title = "Stage Data";
         stageDataWindow.x = FlxG.width - stageDataWindow.width - 10;
         stageDataWindow.y = menuBar.height + 10;
+        
+        editPropWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/editPropWindow"));
+        add(editPropWindow);
+
     }
 
     var targetSpriteY = 0;
@@ -141,6 +147,8 @@ class StageEditorTheSecond extends MusicBeatState {
     function update() {
         super.update();        
         get_conductorInUse().update();
+
+        editPropWindow.screenCenter();
 
         if (targetSprite != null) {
 

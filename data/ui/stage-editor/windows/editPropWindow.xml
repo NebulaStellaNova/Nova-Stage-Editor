@@ -1,0 +1,41 @@
+<window title="Simple Form" width="400" maximizable="false" minimizable="false" collapsable="false">
+    <window-title width="100%">
+    </window-title>
+    <grid width="100%">
+        <label text="Prop Name:" style="padding: 2px;" verticalAlign="center"/>
+        <textfield  id="editPropWindowNameTextField" placeholder="Prop Name" width="100%" verticalAlign="center"/>  
+
+        <label text="Asset Path:" style="padding: 2px;" verticalAlign="center"/>
+        <textfield  id="editPropWindowAssetPathTextField" placeholder="Asset Path" width="100%" verticalAlign="center"/> 
+
+        <label text="Position:" style="padding: 2px;" verticalAlign="center"/>
+        <hbox width="100%">
+            <number-stepper id="editPropWindowPosStepperX" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowPosStepperY" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
+        </hbox>
+
+        <label text="Scroll:" style="padding: 2px;" verticalAlign="center"/>
+        <hbox width="100%">
+            <number-stepper id="editPropWindowScrollStepperX" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowScrollStepperY" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
+        </hbox>
+
+        <label text="Scale:" style="padding: 2px;" verticalAlign="center"/>
+        <number-stepper id="editPropWindowScaleStepper" pos="1" step="0.1" width="100%" verticalAlign="center"/>
+
+        <label text="Z-Index:" style="padding: 2px;" verticalAlign="center"/>
+        <number-stepper id="editPropWindowZIndexStepper" pos="1" step="0.1" width="100%" verticalAlign="center"/>
+    </grid>
+    <hbox width="100%" style="spacing:15px;">
+        <label text="Flip X:" style="padding: 2px;" verticalAlign="center"/>
+        <checkbox id="editPropWindowFlipXCheckbox"/>
+        <label text="Flip Y:" style="padding: 2px;" verticalAlign="center"/>
+        <checkbox id="editPropWindowFlipYCheckbox"/>
+        <label text="Pixel:" style="padding: 2px;" verticalAlign="center"/>
+        <checkbox id="editPropWindowIsPixelCheckbox"/>
+    </hbox>
+    <window-footer width="100%">
+            <spacer width="100%" />
+            <button text="Confirm" />
+        </window-footer>
+</window>
