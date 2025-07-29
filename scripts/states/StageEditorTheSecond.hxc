@@ -62,7 +62,24 @@ import flixel.addons.effects.chainable.FlxEffectSprite;
 
 import haxe.ui.events.MouseEvent;
 
+import funkin.modding.PolymodHandler;
+
+import funkin.play.character.CharacterDataParser;
+
+import funkin.util.SortUtil;
+
+import funkin.data.stage.StageRegistry;
+
+import Reflect;
+
 class StageEditorTheSecond extends MusicBeatState {
+
+    var stageIdList = [];
+
+    var editorTitle = "Nova Stage Editor";
+    var editorFolder = "??";
+
+    var keybinds = [];
 
     var notificationManager = new NotificationManager();
 	var windowManager = new WindowManager();
@@ -86,6 +103,30 @@ class StageEditorTheSecond extends MusicBeatState {
         super.create();
         Cursor.show();
 		var chartEditor = new ChartEditorState();
+
+        for (i in PolymodHandler.getAllMods()) {
+            if (i.title == editorTitle) {
+                editorFolder = i.id;
+            }
+        }
+
+        var nameList = [];
+        for (i in CharacterDataParser.characterCache.keys()) {
+            nameList.push(CharacterDataParser.characterCache.get(i).name);
+        }
+        nameList.sort(SortUtil.alphabetically);
+
+        var stageRegistry = new StageRegistry();
+        stageRegistry.loadEntries();
+
+        var stageNameList = [];
+        for (i in stageRegistry.entries.keys()) {
+            stageIdList.push(i);
+            stageNameList.push(stageRegistry.entries.get(i).stageName);
+        }
+        stageNameList.sort(SortUtil.alphabetically);
+        stageIdList.sort(SortUtil.alphabetically);
+        trace(stageNameList);
 
         var bg = new FunkinSprite(0, 0).loadGraphic(Paths.image('menuDesat'));
 		bg.scrollFactor.set(0, 0);
@@ -124,32 +165,19 @@ class StageEditorTheSecond extends MusicBeatState {
         var menuBar = RuntimeComponentBuilder.build(Paths.ui("stage-editor/menubar"));
         add(menuBar);
 
-        var exitToMenuItem = menuBar.findComponent("exitToMenu");
-        exitToMenuItem.onClick = ()->{
+        var exit = ()->{
             FlxG.switchState(new MainMenuState());
             //PolymodHandler.forceReloadAssets();
 		}
+        var exitToMenuItem = menuBar.findComponent("exitToMenu");
+        exitToMenuItem.onClick = exit;
+        newKeybind(["CONTROL", "Q"], exit);
 
         saveAsComponent = menuBar.findComponent("saveStageAs");
         bind(saveAsComponent, MouseEvent.CLICK, test);
 
         var saveStageComponent = menuBar.findComponent("saveStage");
-        saveStageComponent.onClick = ()->{ 
-            /* newNotification("New Update!", "A new update has been found!!", NotificationType.Warning, 3000, [
-                { 
-                    text: "Open Gamebanana", 
-                    callback: ()->{
-                        trace("Yo ??");
-                    } 
-                },
-                { 
-                    text: "Download and Install", 
-                    callback: ()->{
-                        trace("Yo ??");
-                    } 
-                }
-            ]); */
-		}
+        saveStageComponent.onClick = ()->{}
 
         var stageDataWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/stageDataWindow"));
         stageDataWindow.screenCenter();
@@ -159,6 +187,18 @@ class StageEditorTheSecond extends MusicBeatState {
         stageDataWindow.title = "Stage Data";
         stageDataWindow.x = FlxG.width - stageDataWindow.width - 10;
         stageDataWindow.y = menuBar.height + 10;
+
+        var playerDropdown = stageDataWindow.findComponent("playerDropdown");
+        var opponentDropdown = stageDataWindow.findComponent("opponentDropdown");
+        var spectatorDropdown = stageDataWindow.findComponent("spectatorDropdown");
+        for (i in nameList) {
+            playerDropdown.dataSource.add({text: i});
+            opponentDropdown.dataSource.add({text: i});
+            spectatorDropdown.dataSource.add({text: i});
+        }
+
+        var stageList = stageDataWindow.findComponent("stageDropdown");
+        for (i in stageNameList) stageList.dataSource.add({text: i});
         
         editPropWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/editPropWindow"));
         editPropWindow.windowManager = windowManager;
@@ -218,6 +258,26 @@ class StageEditorTheSecond extends MusicBeatState {
         if (FlxG.mouse.justPressed) {
             FlxG.sound.play(Paths.sound("click"));
         }
+
+        for (keybind in keybinds) {
+            var pressed = true;
+            var index = 0;
+            for (key in keybind.keys) {
+                if (index == keybind.keys.length - 1) {
+                    if (!Reflect.getProperty(FlxG.keys.justPressed, key)) {
+                        pressed = false;
+                    }
+                } else {
+                    if (!Reflect.getProperty(FlxG.keys.pressed, key)) {
+                        pressed = false;
+                    }
+                }
+                index++;
+            }
+            if (pressed) {
+                keybind.action();
+            }
+        }
     }
 
     override function beatHit() {
@@ -268,5 +328,12 @@ class StageEditorTheSecond extends MusicBeatState {
             case MouseEvent.CLICK:
                 component.onClick = func;
         }
+    }
+
+    function newKeybind(keys:Array<String>, action) {
+        keybinds.push({
+            keys: keys,
+            action: action
+        });
     }
 }
