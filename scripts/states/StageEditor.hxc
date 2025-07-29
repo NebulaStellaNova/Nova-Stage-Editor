@@ -26,7 +26,7 @@ import funkin.Assets;
 
 import flixel.tweens.FlxTween;
 
-import flixel.util.FlxSave;
+// import flixel.util.FlxSave;
 
 import flixel.math.FlxMath;
 
@@ -113,6 +113,8 @@ import openfl.net.FileFilter;
 import openfl.net.URLLoader;
 import openfl.net.URLRequest;
 
+import funkin.save.Save;
+
 class StageEditor extends MusicBeatState {
 
 	var bg:FunkinSprite;
@@ -131,7 +133,14 @@ class StageEditor extends MusicBeatState {
 		}
 	");
 			
-	var save = new FlxSave();
+	// var save = new FlxSave();
+	var save = {
+		bind: (string1, string2)->{},
+		data: Save.fetchFromSlotRaw('nova-editors') ?? {
+			editorSong: null,
+			bgColor: null
+		}
+	};
 
 	// -- Characters -- \\
 	var player;
@@ -755,16 +764,6 @@ class StageEditor extends MusicBeatState {
 					
 		helpWindow.addComponent(helpTabs);
 	}
-
-	function fixPath(path) {
-		var stringSplit = path.split("\\");
-		while (stringSplit[0] != "mods") {
-			stringSplit.shift();
-		}
-		path = stringSplit.join("/");
-		return path;
-	}
-
 	
 	function writeStageFile(path, jsonFile) {
 		var generatedBy = "Nova Stage Editor " + editorVersion;
@@ -993,17 +992,15 @@ class StageEditor extends MusicBeatState {
 		super('StageEditor');
 		h = FlxG.height;
 		w = FlxG.width;
-		brightenShader.data.offset.value = [0.0];
+		// brightenShader.data.offset.value = [0.0];
 	}
 
 	function create() {
 		super.create();
 
-	
-
 		checkForUpdates();
 		
-		save.bind("nova-editors", "NebulaStellaNova");
+		//save.bind("nova-editors", "NebulaStellaNova");
 		if(save.data.editorSong == null) {
 			save.data.editorSong = {
 				title: "Artistic Expression",
@@ -1022,7 +1019,7 @@ class StageEditor extends MusicBeatState {
 		waveform.minWaveformSize = 1;
 		add(waveform);
 
-		var chartEditor = new ChartEditorState();
+		//var chartEditor = new ChartEditorState();
 		
 
 		var icons = ["bf", "gf", "dad"];

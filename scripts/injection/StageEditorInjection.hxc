@@ -34,7 +34,7 @@ class DebugMenuInjection extends Module
 
     public function openUnlockState()
     {
-        FlxG.switchState(ScriptedMusicBeatState.init('StageEditor'));
+        FlxG.switchState(ScriptedMusicBeatState.init('StageEditorTheSecond'));
         trace('opening stage editor');
     }
     

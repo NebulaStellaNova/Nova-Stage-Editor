@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menubar id="menubar" width="100%" height="5%">
+  <style>
+    .menu {
+    // The width of the individual menu items
+    width: 120px;
+    }
+  </style>
+
+  <menu text="File" width="300">
+    <menu-item id="newStage" text="New" shortcutText="Ctrl + N" />
+    <menu-separator />
+    <menu-item id="saveStage" text="Save" shortcutText="Ctrl + S"/>
+    <menu-item id="saveStageAs" text="Save As" shortcutText="Ctrl + Shift + S" />
+    <menu-item id="saveStageForPsych" text="Save For Psych" />
+    <menu-item id="saveStageForCNE" text="Save For Codename Engine (Coming Soon)" />
+    <menu-separator />
+    <menu-item id="exitToMenu" text="Exit To Menu" shortcutText="Ctrl + Q" />
+  </menu>
+
+  <menu text="Edit">
+    
+  </menu>
+
+  <menu text="View">
+    <menu-item id="viewFromPlayer" text="View Stage From Player" />
+    <menu-item id="viewFromOpponent" text="View Stage From Opponent" />
+    <menu-item id="viewFromSpectator" text="View Stage From Spectator" />
+  </menu>
+
+  <menu text="Audio">
+    
+  </menu>
+
+  <menu text="Help">
+    <menu-item id="userGuide" text="User Guide" shortcutText="F1" />
+  </menu>
+
+  <spacer width="100%" />
+  <label text="Nova Stage Editor v2.0" verticalAlign="center" />
+</menubar>
