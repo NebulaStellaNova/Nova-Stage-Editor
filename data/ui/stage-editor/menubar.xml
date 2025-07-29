@@ -17,9 +17,9 @@
     <menu-separator />
     <menu-item id="exitToMenu" text="Exit To Menu" shortcutText="Ctrl + Q" />
   </menu>
-
-  <menu text="Edit">
-    
+  <menu text="Windows">
+    <menu-item id="stageDataWindow" text="Stage Data" />
+    <!-- <menuoptionbox id="songDataWindow" text="Song Data" /> -->
   </menu>
 
   <menu text="View">
@@ -29,11 +29,21 @@
   </menu>
 
   <menu text="Audio">
-    
+    <menu text="Editor Music">
+      <menuitem text="Song 1" />
+      </menu>
+    <vbox width="100%" style="padding: 12px;">
+      <menu-separator />
+      <spacer height="10%"/>
+      <label id="editorMusicVolume" text="Editor Music - 100%" />
+      <slider id="menubarItemVolumeInstrumental" width="100%" majorTicks="10" minorTicks="5" pos="100" />
+    </vbox>
   </menu>
 
   <menu text="Help">
     <menu-item id="userGuide" text="User Guide" shortcutText="F1" />
+    <menu-item id="checkForUpdates" text="Check for Updates" />
+    <menu-item id="redownloadEditor" text="Re-Download Editor" />
   </menu>
 
   <spacer width="100%" />
