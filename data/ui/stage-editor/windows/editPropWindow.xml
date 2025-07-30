@@ -34,31 +34,34 @@
 
         <label text="Scroll:" style="padding: 2px;" verticalAlign="center"/>
         <hbox width="100%">
-            <number-stepper id="editPropWindowScrollStepperX" pos="0" step="0.1" width="100%" verticalAlign="center"/>
-            <number-stepper id="editPropWindowScrollStepperY" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowScrollStepperX" min="0" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowScrollStepperY" min="0" pos="0" step="0.1" width="100%" verticalAlign="center"/>
         </hbox>
 
         <label text="Scale:" style="padding: 2px;" verticalAlign="center"/>
-        <number-stepper id="editPropWindowScaleStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+        <number-stepper id="editPropWindowScaleStepper" min="0" pos="0" step="0.1" width="100%" verticalAlign="center"/>
         
         <label text="Alpha:" style="padding: 2px;" verticalAlign="center"/>
-        <number-stepper id="editPropWindowAlphaStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+        <number-stepper id="editPropWindowAlphaStepper" min="0" pos="0" step="0.1" width="100%" verticalAlign="center"/>
         
         <label text="Angle:" style="padding: 2px;" verticalAlign="center"/>
         <number-stepper id="editPropWindowAngleStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
 
         <label text="Z-Index:" style="padding: 2px;" verticalAlign="center"/>
-        <number-stepper id="editPropWindowZIndexStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+        <number-stepper id="editPropWindowZIndexStepper" min="0" pos="0" step="0.1" width="100%" verticalAlign="center"/>
 
         <label text="Dance Every:" style="padding: 2px;" verticalAlign="center"/>
-        <number-stepper id="editPropWindowDanceStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+        <number-stepper id="editPropWindowDanceStepper" min="0" pos="0" step="0.1" width="100%" verticalAlign="center"/>
         
     </grid>
-    <hbox width="100%" style="spacing: 5px;">
+    <hbox width="100%" style="padding: 10px;">
+        <spacer width="50%"/>
         <label text="Flip X:" style="padding: 2px;" verticalAlign="center"/>
         <checkbox id="editPropWindowFlipXCheckbox"/>
+        <spacer width="10%"/>
         <label text="Flip Y:" style="padding: 2px;" verticalAlign="center"/>
         <checkbox id="editPropWindowFlipYCheckbox"/>
+        <spacer width="10%"/>
         <label text="Pixel:" style="padding: 2px;" verticalAlign="center"/>
         <checkbox id="editPropWindowIsPixelCheckbox"/>
     </hbox>

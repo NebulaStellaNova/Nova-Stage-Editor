@@ -20,7 +20,7 @@
       <textfield  id="stageNameTextField" placeholder="Stage Name" width="100%" verticalAlign="center"/>
 
       <label text="Camera Zoom:" style="padding: 2px;" verticalAlign="center"/>
-      <number-stepper id="defualtCamZoomStepper" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
+      <number-stepper id="defualtCamZoomStepper" min="0" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
     </grid>
     
     <vbox width="100%">
