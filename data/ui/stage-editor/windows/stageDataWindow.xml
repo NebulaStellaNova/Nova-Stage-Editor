@@ -2,16 +2,16 @@
     <window-title width="100%">
     </window-title>
     <vbox width="100%">
-        <dropdown id="stageDropdown" text="Select Stage" width="100%">
+        <dropdown id="stageDropdown" text="Select Stage" width="100%" searchable="true">
         </dropdown>
         
-        <dropdown id="playerDropdown" text="Select Player" width="100%">
+        <dropdown id="playerDropdown" text="Select Player" width="100%" searchable="true">
         </dropdown>
 
-        <dropdown id="opponentDropdown" text="Select Opponent" width="100%">
+        <dropdown id="opponentDropdown" text="Select Opponent" width="100%" searchable="true">
         </dropdown>
 
-        <dropdown id="spectatorDropdown" text="Select Spectator" width="100%">
+        <dropdown id="spectatorDropdown" text="Select Spectator" width="100%" searchable="true">
         </dropdown>
     </vbox>
 

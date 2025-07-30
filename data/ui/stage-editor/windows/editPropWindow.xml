@@ -8,25 +8,53 @@
         <label text="Asset Path:" style="padding: 2px;" verticalAlign="center"/>
         <textfield  id="editPropWindowAssetPathTextField" placeholder="Asset Path" width="100%" verticalAlign="center"/> 
 
+        <label text="Animation Type:" style="padding: 2px;" verticalAlign="center"/>
+        <option-stepper width="100%">
+            <data>
+                <item text="Sparrow" />
+                <item text="Multisparrow" />
+            </data>
+        </option-stepper>
+
+        <label text="Color Tint:" style="padding: 2px;" verticalAlign="center"/>
+        <color-picker-popup id="editPropWindowColorPicker" width="100%" value="#FFFFFF"/>
+
+        <label text="Blend Mode:" style="padding: 2px;" verticalAlign="center"/>
+        <dropdown id="editPropWindowBlendModeDorpdown" text="None" width="100%" searchable="true">
+            <data>
+                <item text="None"/>
+            </data>
+        </dropdown>
+
         <label text="Position:" style="padding: 2px;" verticalAlign="center"/>
         <hbox width="100%">
-            <number-stepper id="editPropWindowPosStepperX" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
-            <number-stepper id="editPropWindowPosStepperY" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowPosStepperX" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowPosStepperY" pos="0" step="0.1" width="100%" verticalAlign="center"/>
         </hbox>
 
         <label text="Scroll:" style="padding: 2px;" verticalAlign="center"/>
         <hbox width="100%">
-            <number-stepper id="editPropWindowScrollStepperX" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
-            <number-stepper id="editPropWindowScrollStepperY" pos="0.7" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowScrollStepperX" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+            <number-stepper id="editPropWindowScrollStepperY" pos="0" step="0.1" width="100%" verticalAlign="center"/>
         </hbox>
 
         <label text="Scale:" style="padding: 2px;" verticalAlign="center"/>
-        <number-stepper id="editPropWindowScaleStepper" pos="1" step="0.1" width="100%" verticalAlign="center"/>
+        <number-stepper id="editPropWindowScaleStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+        
+        <label text="Alpha:" style="padding: 2px;" verticalAlign="center"/>
+        <number-stepper id="editPropWindowAlphaStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+        
+        <label text="Angle:" style="padding: 2px;" verticalAlign="center"/>
+        <number-stepper id="editPropWindowAngleStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
 
         <label text="Z-Index:" style="padding: 2px;" verticalAlign="center"/>
-        <number-stepper id="editPropWindowZIndexStepper" pos="1" step="0.1" width="100%" verticalAlign="center"/>
+        <number-stepper id="editPropWindowZIndexStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+
+        <label text="Dance Every:" style="padding: 2px;" verticalAlign="center"/>
+        <number-stepper id="editPropWindowDanceStepper" pos="0" step="0.1" width="100%" verticalAlign="center"/>
+        
     </grid>
-    <hbox width="100%" style="spacing:15px;">
+    <hbox width="100%" style="spacing: 5px;">
         <label text="Flip X:" style="padding: 2px;" verticalAlign="center"/>
         <checkbox id="editPropWindowFlipXCheckbox"/>
         <label text="Flip Y:" style="padding: 2px;" verticalAlign="center"/>
