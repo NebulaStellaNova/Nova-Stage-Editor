@@ -200,7 +200,7 @@ class StageEditorTheSecond extends MusicBeatState {
         var stageList = stageDataWindow.findComponent("stageDropdown");
         for (i in stageNameList) stageList.dataSource.add({text: i});
         
-        editPropWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/editPropWindow"));
+        editPropWindow = RuntimeComponentBuilder.build(Paths.ui("stage-editor/windows/editPropAnimationWindow"));
         editPropWindow.windowManager = windowManager;
         add(editPropWindow);
 

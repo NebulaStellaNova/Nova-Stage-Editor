@@ -1,0 +1,50 @@
+<window title="Simple Form" width="600" height="600" maximizable="false" minimizable="false" collapsable="false">
+    <window-title width="600">
+    </window-title>
+    <accordion id="ac1" width="100%" height="100%">
+        <vbox id="Anim1" text="Animation 1" width="100%" style="padding: 0px;">
+            <scrollview width="100%" height="100%" contentWidth="100%">
+                <grid width="100%" style="padding: 10px;">      
+                    <label text="Asset Path:" style="padding: 2px;" verticalAlign="center"/>
+                    <textfield  id="editAnimWindowAssetPathTextField" placeholder="None" width="100%" verticalAlign="center" tooltip="If your animation uses a different asset path, type it here."/>  
+    
+                    <label text="Animation Name:" style="padding: 2px;" verticalAlign="center"/>
+                    <textfield  id="editAnimWindowAnimNameTextField" validator="required" placeholder="Animation Name" width="100%" verticalAlign="center" tooltip="Enter the name of you animation. This can be anything. \nThis is a required field."/>  
+    
+                    <label text="Animation Prefix:" style="padding: 2px;" verticalAlign="center"/>
+                    <textfield  id="editAnimWindowAnimPrefixTextField" validator="required" placeholder="Prefix" width="100%" verticalAlign="center" tooltip="Animation name inside the XML. This is case sensitive. \nThis is a required field."/>
+                    
+                    <label text="Indices:" style="padding: 2px;" verticalAlign="center"/>
+                    <textfield  id="editAnimWindowAnimIndicesTextField" placeholder="None" width="100%" verticalAlign="center" tooltip="What frames of the specified prefix should your animation use."/>
+    
+                    
+                    <label text="Offests:" style="padding: 2px;" verticalAlign="center"/>
+                    <hbox width="100%">
+                        <number-stepper id="editAnimWindowAnimOffestXStepper" min="0" pos="0" step="1" width="100%" verticalAlign="center" tooltip="Offestt Animation X"/>
+                        <number-stepper id="editAnimWindowAnimOffestYStepper" min="0" pos="0" step="1" width="100%" verticalAlign="center" tooltip="Offestt Animation Y"/>
+                    </hbox>
+    
+                    <label text="Freame Rate:" style="padding: 2px;" verticalAlign="center"/>
+                    <number-stepper id="editAnimWindowAnimFarameRateStepper" min="0" pos="24" step="1" width="100%" verticalAlign="center" tooltip="Frame Rate of your animation. Default is 24."/>
+                </grid>
+                 <hbox width="100%" style="padding: 10px;">
+                    <spacer width="50%"/>
+                    <label text="Flip X:" style="padding: 2px;" verticalAlign="center"/>
+                    <checkbox id="editPropWindowFlipXCheckbox"/>
+                    <spacer width="10%"/>
+                    <label text="Flip Y:" style="padding: 2px;" verticalAlign="center"/>
+                    <checkbox id="editPropWindowFlipYCheckbox"/>
+                    <spacer width="10%"/>
+                    <label text="Looped:" style="padding: 2px;" verticalAlign="center"/>
+                    <checkbox id="editPropWindowIsPixelCheckbox"/>
+                </hbox>
+            </scrollview>
+        </vbox>   
+    </accordion>
+    <window-footer width="100%">
+            <button text="New Animation" />   
+            <button text="Delete Animation" />   
+            <spacer width="100%" />
+            <button text="Confirm" />
+        </window-footer>
+</window>
